@@ -1,0 +1,166 @@
+package br.com.frostmc.common.util;
+
+import org.bukkit.Bukkit;
+import org.bukkit.craftbukkit.v1_7_R4.CraftServer;
+import org.bukkit.event.Listener;
+import org.bukkit.plugin.java.*;
+
+import br.com.frostmc.common.BukkitMain;
+import br.com.frostmc.common.command.BaseCommand;
+import net.md_5.bungee.api.plugin.Plugin;
+
+import java.security.*;
+import java.net.*;
+import java.io.*;
+import java.util.jar.*;
+import java.util.*;
+
+public class ClassGetter {
+
+	public static ArrayList<Class<?>> getClassesForPackage(Class<?> clas, String pkgname) {
+		ArrayList<Class<?>> classes = new ArrayList<>();
+		CodeSource src = clas.getProtectionDomain().getCodeSource();
+		if (src != null) {
+			URL resource = src.getLocation();
+			resource.getPath();
+			processJarfile(resource, pkgname, classes);
+		}
+		return classes;
+	}
+	
+	public static void loadCommandBukkit() {
+		for (Class<?> classes : ClassGetter.getClassesForPackage(BukkitMain.getPlugin(BukkitMain.class), "br.com.frostmc.common.command")) {
+			try {
+				if (BaseCommand.class.isAssignableFrom(classes) && classes != BaseCommand.class) {
+					BaseCommand utilsCommand = (BaseCommand) classes.newInstance();
+					((CraftServer) Bukkit.getServer()).getCommandMap().register(utilsCommand.getName(), utilsCommand);
+				}
+			} catch (Exception exception) {
+				exception.printStackTrace();
+			}
+		}
+	}
+
+	public static void loadListenerBukkit() {
+		for (Class<?> classes : ClassGetter.getClassesForPackage(BukkitMain.getPlugin(BukkitMain.class), "br.com.frostmc.common")) {
+			try {
+				if (Listener.class.isAssignableFrom(classes)) {
+					Listener listener = (Listener) classes.newInstance();
+					Bukkit.getPluginManager().registerEvents(listener, BukkitMain.getPlugin(BukkitMain.class));
+				}
+			} catch (Exception exception) {
+			}
+		}
+	}
+	
+	public static List<Class<?>> getClassesForPackageByFile(File file, String pkgname) {
+		List<Class<?>> classes = new ArrayList<>();
+		try {
+			String relPath = pkgname.replace('.', '/');
+			JarFile jarFile = new JarFile(file);
+			Throwable localThrowable3 = null;
+			try {
+				Enumeration<JarEntry> entries = jarFile.entries();
+				while (entries.hasMoreElements()) {
+					JarEntry entry = (JarEntry) entries.nextElement();
+					String entryName = entry.getName();
+					if ((entryName.endsWith(".class")) && (entryName.startsWith(relPath))
+							&& (entryName.length() > relPath.length() + "/".length())) {
+						String className = entryName.replace('/', '.').replace('\\', '.');
+						if (className.endsWith(".class")) {
+							className = className.substring(0, className.length() - 6);
+						}
+						Class<?> c = loadClass(className);
+						if (c != null) {
+							classes.add(c);
+						}
+					}
+				}
+			} catch (Throwable localThrowable1) {
+				localThrowable3 = localThrowable1;
+				throw localThrowable1;
+			} finally {
+				if (jarFile != null) {
+					if (localThrowable3 != null) {
+						try {
+							jarFile.close();
+						} catch (Throwable localThrowable2) {
+							localThrowable3.addSuppressed(localThrowable2);
+						}
+					} else {
+						jarFile.close();
+					}
+				}
+			}
+		} catch (IOException e) {
+			throw new RuntimeException("Unexpected IOException reading JAR File '" + file.getAbsolutePath() + "'", e);
+		}
+		return classes;
+	}
+
+	public static ArrayList<Class<?>> getClassesForPackage(final JavaPlugin plugin, final String pkgname) {
+		final ArrayList<Class<?>> classes = new ArrayList<Class<?>>();
+		final CodeSource src = plugin.getClass().getProtectionDomain().getCodeSource();
+		if (src != null) {
+			final URL resource = src.getLocation();
+			resource.getPath();
+			processJarfile(resource, pkgname, classes);
+		}
+		return classes;
+	}
+	
+	public static ArrayList<Class<?>> getClassesForPackage(Plugin plugin, final String pkgname) {
+		final ArrayList<Class<?>> classes = new ArrayList<Class<?>>();
+		final CodeSource src = plugin.getClass().getProtectionDomain().getCodeSource();
+		if (src != null) {
+			final URL resource = src.getLocation();
+			resource.getPath();
+			processJarfile(resource, pkgname, classes);
+		}
+		return classes;
+	}
+
+	private static Class<?> loadClass(final String className) {
+		try {
+			return Class.forName(className);
+		} catch (ClassNotFoundException e) {
+			throw new RuntimeException("Unexpected ClassNotFoundException loading class '" + className + "'");
+		} catch (NoClassDefFoundError e2) {
+			return null;
+		}
+	}
+
+	private static void processJarfile(final URL resource, final String pkgname, final ArrayList<Class<?>> classes) {
+		final String relPath = pkgname.replace('.', '/');
+		final String resPath = resource.getPath().replace("%20", " ");
+		final String jarPath = resPath.replaceFirst("[.]jar[!].*", ".jar").replaceFirst("file:", "");
+		JarFile jarFile;
+		try {
+			jarFile = new JarFile(jarPath);
+		} catch (IOException e) {
+			throw new RuntimeException("Unexpected IOException reading JAR File '" + jarPath + "'", e);
+		}
+		final Enumeration<JarEntry> entries = jarFile.entries();
+		while (entries.hasMoreElements()) {
+			final JarEntry entry = entries.nextElement();
+			final String entryName = entry.getName();
+			String className = null;
+			if (entryName.endsWith(".class") && entryName.startsWith(relPath)
+					&& entryName.length() > relPath.length() + "/".length()) {
+				className = entryName.replace('/', '.').replace('\\', '.').replace(".class", "");
+			}
+			if (className != null) {
+				final Class<?> c = loadClass(className);
+				if (c == null) {
+					continue;
+				}
+				classes.add(c);
+			}
+		}
+		try {
+			jarFile.close();
+		} catch (IOException e2) {
+			e2.printStackTrace();
+		}
+	}
+}

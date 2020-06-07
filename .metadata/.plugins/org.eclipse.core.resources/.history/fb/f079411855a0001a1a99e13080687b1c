@@ -1,0 +1,185 @@
+package br.com.frostmc.gladiator.listeners;
+
+import java.util.Arrays;
+import java.util.List;
+
+import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
+import org.bukkit.Material;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerRespawnEvent;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.scheduler.BukkitRunnable;
+
+import br.com.frostmc.common.BukkitMain;
+import br.com.frostmc.common.util.gamer.Gamer;
+import br.com.frostmc.common.util.gamer.league.LeagueContager;
+import br.com.frostmc.gladiator.FrostGladiator;
+import br.com.frostmc.gladiator.battle1v1.GladiatorManager;
+import br.com.frostmc.gladiator.scoreboard.Scoreboarding;
+import br.com.frostmc.gladiator.util.admin.AdminManager;
+import br.com.frostmc.gladiator.util.warp.WarpManager;
+import br.com.frostmc.gladiator.util.warp.WarpsAPI;
+import br.com.frostmc.gladiator.util.warp.WarpsAPI.Warps;
+
+public class MorreuListener implements Listener {
+	
+	@SuppressWarnings("rawtypes")
+	public int itemsInInventory(Inventory inventory, Material[] search) {
+		List wanted = Arrays.asList(search);
+		int found = 0;
+		ItemStack[] arrayOfItemStack;
+		int j = (arrayOfItemStack = inventory.getContents()).length;
+		for (int i = 0; i < j; i++) {
+			ItemStack item = arrayOfItemStack[i];
+			if ((item != null) && (wanted.contains(item.getType()))) {
+				found += item.getAmount();
+			}
+		}
+		return found;
+	}
+	
+	@SuppressWarnings("deprecation")
+	@EventHandler
+	public void asd(PlayerDeathEvent event) {
+		event.setDeathMessage(null);
+		Player killer = (Player) event.getEntity().getKiller();
+		Player entity = (Player) event.getEntity();
+		if (event.getEntity() instanceof Player) {
+			
+			new BukkitRunnable() {
+				public void run() {
+					event.getEntity().spigot().respawn();
+				}
+			}.runTaskLater(FrostGladiator.getInstance(), 1L);
+			
+			Gamer gamerEntity = BukkitMain.getGamerManager().getGamer(entity.getUniqueId());
+			
+			if (WarpsAPI.isInWarp(entity, Warps.SPAWN)) {
+				GladiatorManager.fighting.remove(entity.getUniqueId());
+				GladiatorManager.opponent.remove(entity.getUniqueId());
+				int sopasKiller = itemsInInventory(killer.getInventory(), new Material[] { Material.MUSHROOM_SOUP });
+				entity.sendMessage("§c§lMORREU §fVocê morreu para o jogador §c" + killer.getName() + " §fe ele ficou com §e" + sopasKiller + " §fsopas restantes.");
+				killer.setGameMode(GameMode.ADVENTURE);
+				killer.setHealth(20.0D);
+				killer.getInventory().setArmorContents(null);
+				killer.getActivePotionEffects().clear();
+				GladiatorManager.fighting.remove(killer.getUniqueId());
+				GladiatorManager.opponent.remove(killer.getUniqueId());
+				Player[] arrayOfPlayer;
+				int j = (arrayOfPlayer = Bukkit.getOnlinePlayers()).length;
+				for (int i = 0; i < j; i++) {
+					Player all = arrayOfPlayer[i];
+					if (AdminManager.isAdmin(all)) {
+						entity.showPlayer(all);
+					}
+				}
+				WarpManager.send(entity);
+				
+			} else if (killer == null) {
+				entity.sendMessage("§c§lMORREU §fVocê morreu para ninguem.");
+			}
+			
+			gamerEntity.addDefeat_1v1(1);
+			gamerEntity.resetWinstreakAdversary_1v1(killer);
+			
+			if (event.getEntity().getKiller() instanceof Player) {
+				Gamer gamerKiller = BukkitMain.getGamerManager().getGamer(killer.getUniqueId());
+				if (WarpsAPI.isInWarp(killer, Warps.SPAWN)) {
+					int sopasEntity = itemsInInventory(entity.getInventory(), new Material[] { Material.MUSHROOM_SOUP });
+					killer.sendMessage("§a§lMATOU §fVocê matou o jogador §a" + killer.getName() + " §fe ele ficou com §a" + sopasEntity + " §fsopas restantes.");
+					killer.setGameMode(GameMode.ADVENTURE);
+					killer.setHealth(20.0D);
+					killer.getInventory().setArmorContents(null);
+					killer.getActivePotionEffects().clear();
+					GladiatorManager.fighting.remove(killer.getUniqueId());
+					GladiatorManager.opponent.remove(killer.getUniqueId());
+					Player[] arrayOfPlayer;
+					int j = (arrayOfPlayer = Bukkit.getOnlinePlayers()).length;
+					for (int i = 0; i < j; i++) {
+						Player all = arrayOfPlayer[i];
+						if (AdminManager.isAdmin(all)) {
+							killer.showPlayer(all);
+						}
+					}
+					WarpManager.send(killer);
+				} else {
+					killer.sendMessage("§a§lMATOU §fVocê matou o jogador §a" + entity.getName() + "§f.");
+				}
+				
+				LeagueContager league = new LeagueContager(gamerKiller, gamerEntity);
+				league.prizeLeague();
+				
+				gamerKiller.addVictory_1v1(1);
+				gamerKiller.addWinstreak_1v1(1);
+				
+				Scoreboarding.updateOpponent(killer);
+				Scoreboarding.updateStats(killer);
+				return;
+			}
+			
+		}
+	}
+
+	@SuppressWarnings({ "static-access", "deprecation" })
+	@EventHandler
+	public void playerQuitEvent(PlayerQuitEvent event) {
+		Player entity = event.getPlayer();
+		
+		Gamer gamerEntity = BukkitMain.getGamerManager().getGamer(entity.getUniqueId());
+		
+		if (!GladiatorManager.fighting.containsKey(entity.getUniqueId()))
+			return;
+		
+		Player killer = Bukkit.getPlayer(GladiatorManager.fighting.get(entity.getUniqueId()).getName());
+		Gamer gamerKiller = BukkitMain.getGamerManager().getGamer(killer.getUniqueId());
+		gamerEntity.addDefeat_1v1(1);
+		gamerEntity.resetWinstreakAdversary_1v1(killer);
+
+		GladiatorManager.fighting.remove(entity.getUniqueId());
+		GladiatorManager.opponent.remove(entity.getUniqueId());
+		int sopasKiller = itemsInInventory(killer.getInventory(), new Material[] { Material.MUSHROOM_SOUP });
+		entity.sendMessage("§c§lMORREU §fVocê morreu para o jogador §c" + killer.getName() + " §fe ele ficou com §e" + sopasKiller + " §fsopas restantes.");
+		killer.setGameMode(GameMode.ADVENTURE);
+		killer.setHealth(20.0D);
+		killer.getInventory().setArmorContents(null);
+		killer.getActivePotionEffects().clear();
+		GladiatorManager.fighting.remove(killer.getUniqueId());
+		GladiatorManager.opponent.remove(killer.getUniqueId());
+		Player[] arrayOfPlayer;
+		int j = (arrayOfPlayer = Bukkit.getOnlinePlayers()).length;
+		for (int i = 0; i < j; i++) {
+			Player all = arrayOfPlayer[i];
+			if (AdminManager.isAdmin(all)) {
+				entity.showPlayer(all);
+			}
+		}
+		WarpManager.send(killer);
+		
+		killer.sendMessage("§a§lMATOU §fVocê matou o jogador §a" + entity.getName() + "§f.");
+		LeagueContager league = new LeagueContager(gamerKiller, gamerEntity);
+		league.prizeLeague();
+		
+		gamerKiller.addVictory_1v1(1);
+		gamerKiller.addWinstreak_1v1(1);
+		
+		Scoreboarding.updateOpponent(killer);
+		Scoreboarding.updateStats(killer);
+	}
+	
+	@EventHandler
+	public void asd(PlayerRespawnEvent event) {
+		Player player = event.getPlayer();
+		new BukkitRunnable() {
+			public void run() {
+				GladiatorManager.removeGladiator(player);
+			}
+		}.runTaskLater(FrostGladiator.getInstance(), 10L);
+	}
+
+}

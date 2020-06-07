@@ -1,0 +1,79 @@
+package br.com.frostmc.pvp.util.jump;
+
+import java.util.ArrayList;
+import java.util.UUID;
+
+import org.bukkit.Effect;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.Sound;
+import org.bukkit.block.BlockFace;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.util.Vector;
+
+public class Launchers implements Listener {
+	
+	public ArrayList<UUID>noFall=new ArrayList<UUID>();
+
+	@EventHandler(priority = EventPriority.MONITOR)
+	public void PuloAlto(PlayerMoveEvent e) {
+		Player p = e.getPlayer();
+		if (e.getTo().getBlock().getRelative(BlockFace.DOWN).getType() == Material.SPONGE) {
+			Location loc = e.getTo().getBlock().getLocation();
+			Vector sponge = p.getLocation().getDirection().multiply(0).setY(2.5);
+			p.setVelocity(sponge);
+			p.playSound(loc, Sound.LEVEL_UP, 6.0F, 1.0F);
+			p.playEffect(loc, Effect.FLAME, null);
+			if (!this.noFall.contains(p.getUniqueId())) {
+				this.noFall.add(p.getUniqueId());
+			}
+		}
+	}
+	@EventHandler(priority = EventPriority.MONITOR)
+	public void Impulso(PlayerMoveEvent e) {
+		Player p = e.getPlayer();
+		if (e.getTo().getBlock().getRelative(BlockFace.DOWN).getType() == Material.REDSTONE_BLOCK) {
+			Location loc = e.getTo().getBlock().getLocation();
+			Vector redstone = p.getLocation().getDirection().multiply(3.6).setY(1);
+			p.setVelocity(redstone);
+			p.playSound(loc, Sound.LEVEL_UP, 6.0F, 1.0F);
+			p.playEffect(loc, Effect.FLAME, null);
+			if (!this.noFall.contains(p.getUniqueId())) {
+				this.noFall.add(p.getUniqueId());
+			}
+		}
+	}
+	@EventHandler(priority = EventPriority.MONITOR)
+	public void PuloBaixo(PlayerMoveEvent e) {
+		Player p = e.getPlayer();
+		if (e.getTo().getBlock().getRelative(BlockFace.DOWN).getType() == Material.ENDER_PORTAL_FRAME) {
+			Location loc = e.getTo().getBlock().getLocation();
+			Vector ender = p.getLocation().getDirection().multiply(0).setY(1);
+			p.setVelocity(ender);
+			p.playSound(loc, Sound.LEVEL_UP, 6.0F, 1.0F);
+			p.playEffect(loc, Effect.FLAME, null);
+			if (!this.noFall.contains(p.getUniqueId())) {
+				this.noFall.add(p.getUniqueId());
+			}
+		}
+	}
+
+	@EventHandler
+	public void onEntityDamage(EntityDamageEvent e) {
+		if ((e.getEntity() instanceof Player)) {
+			Player p = (Player) e.getEntity();
+			if ((e.getCause().equals(EntityDamageEvent.DamageCause.FALL)) && (this.noFall.contains(p.getUniqueId()))) {
+				e.setCancelled(true);
+				while (this.noFall.contains(p.getUniqueId())) {
+					this.noFall.remove(p.getUniqueId());
+				}
+			}
+		}
+	}
+
+}

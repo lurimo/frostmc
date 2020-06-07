@@ -1,0 +1,76 @@
+package br.com.frostmc.bungeecord.command.player;
+
+import java.util.Map;
+
+import br.com.frostmc.bungeecord.command.ProxyCommand;
+import br.com.frostmc.core.data.mysql.bungeecord.server.Event;
+import br.com.frostmc.core.util.Strings;
+import br.com.frostmc.core.util.enums.GroupsType;
+import net.md_5.bungee.api.ChatColor;
+import net.md_5.bungee.api.CommandSender;
+import net.md_5.bungee.api.ProxyServer;
+import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.api.config.ServerInfo;
+import net.md_5.bungee.api.connection.ProxiedPlayer;
+
+public class ConnectCommand extends ProxyCommand {
+	
+	public ConnectCommand() {
+		super("connect", "", "server", "go");
+	}
+
+	@SuppressWarnings({ "deprecation", "unused" })
+	@Override
+	public void execute(CommandSender commandSender, String[] args) {
+		if (isPlayer(commandSender)) {
+			ProxiedPlayer player = (ProxiedPlayer) commandSender;
+			Map<String, ServerInfo> servers = ProxyServer.getInstance().getServers();
+			if (args.length == 0) {
+				TextComponent serverList = new TextComponent(ProxyServer.getInstance().getTranslation("server_list", new Object[0]));
+				serverList.setColor(ChatColor.BLUE);
+				player.sendMessage("§a§lCONNECT §fUtilize: §a/connect (server)");
+			} else {
+				ServerInfo server = (ServerInfo) servers.get(args[0]);
+				if (server == null) {
+					player.sendMessage("§c§lERRO §fO servidor §e" + args[0].toLowerCase() + "§f é inexistente!");
+					return;
+				}
+				if (server.getName().startsWith("SS")) {
+					if (!hasGroupPermission(player, GroupsType.YOUTUBERPLUS)) {
+						player.sendMessage("§c§lERRO §fVocê não possui permissão para ir a este servidor, o acesso dele é de acesso restrito a equipe.");
+						return;
+					}
+				}
+				if (server.getName().startsWith("LOGIN")) {
+					if (!hasGroupPermission(player, GroupsType.YOUTUBERPLUS)) {
+						player.sendMessage("§c§lERRO §fVocê não possui permissão para ir a este servidor, o acesso dele é de acesso restrito a equipe.");
+						return;
+					}
+				}
+				if (server.getName().startsWith("EVENTO")) {
+					Event event = new Event();
+					if (event.exists()) {
+						player.sendMessage("§3§lEVENTO §fNenhum servidor com evento foi encontrado.");
+						return;
+					}
+				}
+				if (server == null) {
+					player.sendMessage("§3§lCONNECT §fServidor inexistente.");
+				} else if (player.getServer().getInfo().equals(ProxyServer.getInstance().getServerInfo(server.getName()))) {
+					player.sendMessage("§3§lCONNECT §fO mesmo já está conectado a esse servidor.");
+					return;
+				} else if (!server.canAccess(player)) {
+					player.sendMessage(Strings.getPermission());
+				} else {
+					player.sendMessage(" ");
+					player.sendMessage("§3§lCONNECT §fTentando conectar ao servidor §3" + Strings.getServerIP(server.getName()));
+					player.sendMessage(" ");
+					player.connect(server);				
+				}
+			}
+		} else {
+			return;
+		}
+	}
+	
+}

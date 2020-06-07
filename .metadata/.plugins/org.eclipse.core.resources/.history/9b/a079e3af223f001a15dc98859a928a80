@@ -1,0 +1,98 @@
+package br.com.frostmc.common.command.moderators.moderate;
+
+import java.util.Arrays;
+
+import org.bukkit.Bukkit;
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
+
+import br.com.frostmc.common.BukkitMain;
+import br.com.frostmc.common.command.BaseCommand;
+import br.com.frostmc.common.util.ServerOptions;
+import br.com.frostmc.core.util.Strings;
+
+public class ChatCommand extends BaseCommand {
+
+	public ChatCommand() {
+		super("chat", "", Arrays.asList(""));
+	}
+
+	public enum ChatModes {
+		ON, OFF, CLEAR;
+	}
+	
+	@Override
+	public boolean execute(CommandSender commandSender, String label, String[] args) {
+		if (isPlayer(commandSender)) {
+			Player player = getPlayer(commandSender);
+			if (!BukkitMain.getPermissions().isYoutuberPlus(commandSender)) {
+				player.sendMessage(Strings.getPermission());
+				return true;
+			}
+			if (args.length == 0) {
+				player.sendMessage("§3§lCHAT §fUtilize o comando: /chat (mode)");
+				return true;
+			}
+			if (args.length == 1) {
+				if (args[0].equalsIgnoreCase("on")) {
+					if (ServerOptions.CHAT.isActive()) {
+						player.sendMessage("§3§lCHAT §fO chat já está ativado!");
+						return true;
+					}
+					ServerOptions.CHAT.setActive(true);
+					player.sendMessage("§3§lCHAT §fO chat foi ativado.");
+					return true;
+				} else if (args[0].equalsIgnoreCase("off")) {
+					if (!ServerOptions.CHAT.isActive()) {
+						player.sendMessage("§3§lCHAT §fO chat já está desativado!");
+						return true;
+					}
+					ServerOptions.CHAT.setActive(false);
+					player.sendMessage("§3§lCHAT §fO chat foi desativado.");
+					return true;
+				} else if (args[0].equalsIgnoreCase("clear")) {
+					for (int i = 1;i <100; i++) {
+						Bukkit.broadcastMessage(" ");
+					}
+					player.sendMessage("§3§lCHAT §fTodas mensagens acima foram removidas.");
+					return true;
+				}
+				return true;
+			}
+		} else {
+			CommandSender player = commandSender;
+			if (args.length == 0) {
+				player.sendMessage("§3§lCHAT §fUtilize o comando: /chat (mode)");
+				return true;
+			}
+			if (args.length == 1) {
+				if (args[0].equalsIgnoreCase("on")) {
+					if (ServerOptions.CHAT.isActive()) {
+						player.sendMessage("§3§lCHAT §fO chat já está ativado!");
+						return true;
+					}
+					ServerOptions.CHAT.setActive(true);
+					player.sendMessage("§3§lCHAT §fO chat foi ativado.");
+					return true;
+				} else if (args[0].equalsIgnoreCase("off")) {
+					if (!ServerOptions.CHAT.isActive()) {
+						player.sendMessage("§3§lCHAT §fO chat já está desativado!");
+						return true;
+					}
+					ServerOptions.CHAT.setActive(false);
+					player.sendMessage("§3§lCHAT §fO chat foi desativado.");
+					return true;
+				} else if (args[0].equalsIgnoreCase("clear")) {
+					for (int i = 1;i <100; i++) {
+						Bukkit.broadcastMessage(" ");
+					}
+					player.sendMessage("§3§lCHAT §fTodas mensagens acima foram removidas.");
+					return true;
+				}
+				return true;
+			}
+		}
+		return false;
+	}
+
+}

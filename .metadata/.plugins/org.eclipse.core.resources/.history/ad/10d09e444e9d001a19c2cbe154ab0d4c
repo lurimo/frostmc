@@ -1,0 +1,113 @@
+ package br.com.frostmc.lobby.inventory.player;
+
+import java.util.Arrays;
+
+import org.bukkit.Bukkit;
+import org.bukkit.Material;
+import org.bukkit.entity.Player;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.scheduler.BukkitRunnable;
+
+import br.com.frostmc.common.util.itemBuilder.ItemBuilder;
+import br.com.frostmc.core.util.enums.ServersType;
+import br.com.frostmc.lobby.FrostLobby;
+import br.com.frostmc.lobby.util.server.PingManager;
+
+public class ServersInventory {
+	
+	public void startUpdate() {
+		new BukkitRunnable() {
+			public void run() {
+
+				updateInventory();
+
+			}
+		}.runTaskTimer(FrostLobby.getInstance(), 1, 5);
+	}
+	
+	public static final String title = "§8§nEscolha um modo de jogo:";
+	public static final Inventory inventory = Bukkit.createInventory(null, 27, title);
+	
+	public void updateInventory() {
+		PingManager hga1 = new PingManager(ServersType.HG_A1);
+		PingManager hga2 = new PingManager(ServersType.HG_A2);
+		PingManager hga3 = new PingManager(ServersType.HG_A3);
+		PingManager hga4 = new PingManager(ServersType.HG_A4);
+		PingManager hga5 = new PingManager(ServersType.HG_A5);
+		PingManager hga6 = new PingManager(ServersType.HG_A6);
+		PingManager hga7 = new PingManager(ServersType.HG_A7);
+		
+		PingManager pvp = new PingManager(ServersType.PVP);
+		PingManager umvsum = new PingManager(ServersType.ONEVSONE);
+		PingManager gladiator = new PingManager(ServersType.GLADIATOR);
+		
+		int playersOnlineHG = hga1.getOnlinePlayers() + hga2.getOnlinePlayers() + hga3.getOnlinePlayers() + hga4.getOnlinePlayers() + hga5.getOnlinePlayers() + hga6.getOnlinePlayers() + hga7.getOnlinePlayers();
+		int playersMaxHG = hga1.getMaxPlayers() + hga2.getMaxPlayers() + hga3.getMaxPlayers() + hga4.getMaxPlayers() + hga5.getMaxPlayers() + hga6.getMaxPlayers() + hga7.getMaxPlayers();
+		
+		inventory.setItem(11, getItemPvP(pvp).finalizar());
+		inventory.setItem(12, getItemHG(playersOnlineHG, playersMaxHG).finalizar());
+		inventory.setItem(13, getItem1v1(umvsum).finalizar());
+		inventory.setItem(14, getItemGladiator(gladiator).finalizar());
+	}
+	
+	public ItemBuilder getItemPvP(PingManager pingManager) {
+		return new ItemBuilder().setNome("§aKit PvP").setMaterial(Material.DIAMOND_SWORD).setLore(Arrays.asList("", "§eJogadores: §f" + pingManager.getOnlinePlayers() + "/" + pingManager.getMaxPlayers(), "§eStatus: §f" + (!pingManager.getMotd().contains("online") ? "Offline" : "Online"), "", "§eInformações do modo de jogo:", "", "§fO Kit PvP é o lugar ideal para", "§faprimorar suas habilidades.", "", "§fTemos diferentes arenas e warps.", "§fVenha se tornar o melhor jogador!", "", "§eClique com o §fbotão esquerdo/direito", "§epara conectar nesse servidor.")).setQuantia(pingManager.getOnlinePlayers());
+	}
+	
+	public ItemBuilder getItem1v1(PingManager pingManager) {
+		return new ItemBuilder().setNome("§a1 vs 1").setMaterial(Material.BLAZE_ROD).setLore(Arrays.asList("", "§eJogadores: §f" + pingManager.getOnlinePlayers() + "/" + pingManager.getMaxPlayers(), "§eStatus: §f" + (!pingManager.getMotd().contains("online") ? "Offline" : "Online"), "", "§eInformações do modo de jogo:", "", "§fTreine suas habilidades em pvp", "§fno servidor de Um vs. Um!", "", "§fLute contra seus oponentes", "§fde uma forma certa e justa!", "", "§eClique com o §fbotão esquerdo/direito", "§epara conectar nesse servidor.")).setQuantia(pingManager.getOnlinePlayers());
+	}
+	
+	@SuppressWarnings("deprecation")
+	public ItemBuilder getItemGladiator(PingManager pingManager) {
+		return new ItemBuilder().setNome("§aGladiator").setMaterial(Material.getMaterial(101)).setLore(Arrays.asList("", "§eJogadores: §f" + pingManager.getOnlinePlayers() + "/" + pingManager.getMaxPlayers(), "§eStatus: §f" + (!pingManager.getMotd().contains("online") ? "Offline" : "Online"), "", "§eInformações do modo de jogo:", "", "§fTreine suas habilidades em pvp", "§fno servidor de Gladiator!", "", "§fDesafie seus oponentes para", "§fuma batalha nos céus!", "", "§eClique com o §fbotão esquerdo/direito", "§epara conectar nesse servidor.")).setQuantia(pingManager.getOnlinePlayers());
+	}
+	
+	public ItemBuilder getItemHG(int playersOnlineHG, int playersMaxHG) {
+		return new ItemBuilder().setNome("§aHardcore Games").setMaterial(Material.MUSHROOM_SOUP).setLore(Arrays.asList("", "§eJogadores: §f" + playersOnlineHG + "/" + playersMaxHG, "", "§eInformações do modo de jogo:", "", "§fColoque todo o seu treino em pratica!", "", "§fNesse modo, 80 jogadores batalham", "§fentre si até que reste apenas um", "§fsobrevivente, que vença o melhor", "§fjogador.",  "", "§eClique com o §fbotão esquerdo §epara", "§eentrar na sala com mais jogadores!", "", "§eClique com o §fbotão direito §epara ", "§ever todas as salas disponíveis.")).setQuantia(playersOnlineHG);
+	}
+	
+	@SuppressWarnings("deprecation")
+	public ItemBuilder getItemHgRoom(PingManager pingManager, String room, int playersOnlineHG, int playersMaxHG) {
+		if (pingManager.getMotd().contains("iniciando")) {
+			new ItemBuilder().setNome("§a§na" + room + ".hg.frostmc.com.br").setMaterial(Material.getMaterial(351)).setDurabilidade(10).setLore(Arrays.asList("", "§fA partida está no estágio §a§lINICIANDO§f.", "§fIniciando: §a" + pingManager.getMotd().replaceAll("iniciando: ", ""), "§fJogadores: §a" + pingManager.getOnlinePlayers() + "/" + pingManager.getMaxPlayers(), "")).setQuantia(playersOnlineHG);
+		} else if (pingManager.getMotd().contains("invencibilidade")) {
+			new ItemBuilder().setNome("§e§na" + room + ".hg.frostmc.com.br").setMaterial(Material.getMaterial(351)).setDurabilidade(11).setLore(Arrays.asList("", "§fA partida está no estágio §e§lINVENCIBILIDADE§f.", "§fInvencibilidade: §e" + pingManager.getMotd().replaceAll("invencibilidade: ", ""), "§fJogadores: §e" + pingManager.getOnlinePlayers() + "/" + pingManager.getMaxPlayers(), "")).setQuantia(playersOnlineHG);
+		} else if (pingManager.getMotd().contains("andamento")) {
+			new ItemBuilder().setNome("§6§na" + room + ".hg.frostmc.com.br").setMaterial(Material.getMaterial(351)).setDurabilidade(14).setLore(Arrays.asList("", "§fA partida está no estágio §6§lANDAMENTO§f.", "§fAndamento: §6" + pingManager.getMotd().replaceAll("andamento: ", ""), "§fJogadores: §6" + pingManager.getOnlinePlayers() + "/" + pingManager.getMaxPlayers(), "")).setQuantia(playersOnlineHG);
+		} else if (pingManager.getMotd().contains("winner")) {
+			new ItemBuilder().setNome("§c§na" + room + ".hg.frostmc.com.br").setMaterial(Material.getMaterial(351)).setDurabilidade(1).setLore(Arrays.asList("", "§fA partida está no estágio §c§lFINAL§f.", "§fA partida foi §c§lENCERRADA§f.", ""));
+		} else if (pingManager.getMotd().contains("Minecraft")) {
+			new ItemBuilder().setNome("§9§na" + room + ".hg.frostmc.com.br").setMaterial(Material.getMaterial(351)).setDurabilidade(12).setLore(Arrays.asList("", "§fEsse servidor está §9§lREINICIANDO§f.", "§fAguarde um momento para entrar.", ""));
+		} else if (!pingManager.getMotd().contains(":")) {
+			new ItemBuilder().setNome("§9§na" + room + ".hg.frostmc.com.br").setMaterial(Material.getMaterial(351)).setDurabilidade(2).setLore(Arrays.asList("", "§fEsse servidor está §c§lOFFLINE§f.", "§fConecte-se em uma sala §c§lDISPONIVEL§f.", ""));
+		}
+		return new ItemBuilder().setMaterial(Material.AIR);
+	}
+	
+	@SuppressWarnings("deprecation")
+	public static void open(Player player) {
+		PingManager hga1 = new PingManager(ServersType.HG_A1);
+		PingManager hga2 = new PingManager(ServersType.HG_A2);
+		PingManager hga3 = new PingManager(ServersType.HG_A3);
+		PingManager hga4 = new PingManager(ServersType.HG_A4);
+		PingManager hga5 = new PingManager(ServersType.HG_A5);
+		PingManager hga6 = new PingManager(ServersType.HG_A6);
+		PingManager hga7 = new PingManager(ServersType.HG_A7);
+		
+		PingManager pvp = new PingManager(ServersType.PVP);
+		PingManager umvsum = new PingManager(ServersType.ONEVSONE);
+		PingManager gladiator = new PingManager(ServersType.GLADIATOR);
+		
+		int playersOnlineHG = hga1.getOnlinePlayers() + hga2.getOnlinePlayers() + hga3.getOnlinePlayers() + hga4.getOnlinePlayers() + hga5.getOnlinePlayers() + hga6.getOnlinePlayers() + hga7.getOnlinePlayers();
+		int playersMaxHG = hga1.getMaxPlayers() + hga2.getMaxPlayers() + hga3.getMaxPlayers() + hga4.getMaxPlayers() + hga5.getMaxPlayers() + hga6.getMaxPlayers() + hga7.getMaxPlayers();
+		
+		inventory.setItem(11, new ItemBuilder().setNome("§aKit PvP").setMaterial(Material.DIAMOND_SWORD).setLore(Arrays.asList("", "§eJogadores: §f" + pvp.getOnlinePlayers() + "/" + pvp.getMaxPlayers(), "§eStatus: §f" + (!pvp.getMotd().contains("online") ? "Offline" : "Online"), "", "§eInformações do modo de jogo:", "", "§fO Kit PvP é o lugar ideal para", "§faprimorar suas habilidades.", "", "§fTemos diferentes arenas e warps.", "§fVenha se tornar o melhor jogador!", "", "§eClique com o §fbotão esquerdo/direito", "§epara conectar nesse servidor.")).setQuantia(pvp.getOnlinePlayers()).finalizar());
+		inventory.setItem(12, new ItemBuilder().setNome("§aHardcore Games").setMaterial(Material.MUSHROOM_SOUP).setLore(Arrays.asList("", "§eJogadores: §f" + playersOnlineHG + "/" + playersMaxHG, "", "§eInformações do modo de jogo:", "", "§fColoque todo o seu treino em pratica!", "", "§fNesse modo, 80 jogadores batalham", "§fentre si até que reste apenas um", "§fsobrevivente, que vença o melhor", "§fjogador.",  "", "§eClique com o §fbotão esquerdo §epara", "§eentrar na sala com mais jogadores!", "", "§eClique com o §fbotão direito §epara ", "§ever todas as salas disponíveis.")).setQuantia(playersOnlineHG).finalizar());
+		inventory.setItem(13, new ItemBuilder().setNome("§a1 vs 1").setMaterial(Material.BLAZE_ROD).setLore(Arrays.asList("", "§eJogadores: §f" + umvsum.getOnlinePlayers() + "/" + umvsum.getMaxPlayers(), "§eStatus: §f" + (!umvsum.getMotd().contains("online") ? "Offline" : "Online"), "", "§eInformações do modo de jogo:", "", "§fTreine suas habilidades em pvp", "§fno servidor de Um vs. Um!", "", "§fLute contra seus oponentes", "§fde uma forma certa e justa!", "", "§eClique com o §fbotão esquerdo/direito", "§epara conectar nesse servidor.")).setQuantia(umvsum.getOnlinePlayers()).finalizar());
+		inventory.setItem(14, new ItemBuilder().setNome("§aGladiator").setMaterial(Material.getMaterial(101)).setLore(Arrays.asList("", "§eJogadores: §f" + gladiator.getOnlinePlayers() + "/" + gladiator.getMaxPlayers(), "§eStatus: §f" + (!gladiator.getMotd().contains("online") ? "Offline" : "Online"), "", "§eInformações do modo de jogo:", "", "§fTreine suas habilidades em pvp", "§fno servidor de Gladiator!", "", "§fDesafie seus oponentes para", "§fuma batalha nos céus!", "", "§eClique com o §fbotão esquerdo/direito", "§epara conectar nesse servidor.")).setQuantia(gladiator.getOnlinePlayers()).finalizar());
+		
+		player.openInventory(inventory);
+	}
+	
+}

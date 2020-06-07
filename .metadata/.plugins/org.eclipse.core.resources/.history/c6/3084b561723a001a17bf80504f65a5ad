@@ -1,0 +1,255 @@
+package br.com.frostmc.core.data.mysql.bungeecord.punishments;
+
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Statement;
+
+import br.com.frostmc.bungeecord.BungeeMain;
+import br.com.frostmc.bungeecord.listener.PlayerLoginListener;
+import br.com.frostmc.core.data.mysql.bungeecord.AccountBungee;
+import br.com.frostmc.core.util.Longs;
+import br.com.frostmc.core.util.Strings;
+import br.com.frostmc.core.util.enums.BanType;
+import br.com.frostmc.core.util.enums.GroupsType;
+import br.com.frostmc.core.util.enums.TemporaryType;
+import br.com.frostmc.core.util.information.Date;
+import net.md_5.bungee.api.ProxyServer;
+import net.md_5.bungee.api.connection.ProxiedPlayer;
+
+public class Punishs {
+	
+	public String player;
+	public String ipAddrees;
+	public String date;
+	public BanType banType;
+	public TemporaryType temporaryType;
+	public String staffer;
+	public String reason;
+	public long expire;
+	
+	public Punishs(String player, String ipAddrees, String date, BanType banType, TemporaryType temporaryType, String staffer, String reason, long expire) {
+		this.player = player;
+		this.ipAddrees = ipAddrees;
+		this.date = date;
+		this.banType = banType;
+		this.temporaryType = temporaryType;
+		this.staffer = staffer;
+		this.reason = reason;
+		this.expire = expire;
+	}
+	
+	public Punishs(String player) {
+		this.player = player;
+		this.ipAddrees = "0.0.0.0";
+		this.date = "00/00/0000 - 00:00";
+		this.banType = BanType.BANNED;
+		this.temporaryType = TemporaryType.PERMANENT;
+		this.staffer = null;
+		this.reason = null;
+		this.expire = 0L;
+	}
+	
+	public String getIpAddrees() { return ipAddrees; }
+	public String getDate() { return date; }
+	public BanType getBanType() { return banType; }
+	public TemporaryType getTemporaryType() { return temporaryType; }
+	public String getStaffer() { return staffer; }
+	public String getReason() { return reason; }
+	public long getExpire() { return expire; }
+	
+	public void pardon() {
+		delete();
+	}
+	
+	@SuppressWarnings("deprecation")
+	public void setPunishServer(AccountBungee punido, AccountBungee staffer, BanType banType, TemporaryType temporaryType, String reason, long expire) {
+		
+		if (punido.getPlayer() == null) {
+			if (punido == staffer) {
+				staffer.getPlayer().sendMessage("§c§lPUNISH §fVocê não pode punir a si mesmo.");
+				return;
+			}
+			
+			if (punido.getGroups().hasGroupPermission(staffer.getGroups().getGroupsType())) {
+				staffer.getPlayer().sendMessage("§c§lPUNISH §fVocê não pode punir esse jogador.");
+				return;
+			}
+			
+			this.player = punido.getGroups().player;
+			this.ipAddrees = punido.getGroups().getIpAddrees();
+			if (staffer.getPlayer() == null) {
+				this.staffer = "CONSOLE";
+			} else {
+				this.staffer = staffer.getPlayer().getName();
+			}
+			this.date = Date.getMonth();
+			this.banType = banType;
+			this.temporaryType = temporaryType;
+			this.reason = reason;
+			this.expire = expire;
+			
+			new PlayerLoginListener().blacklistedAddress.add(punido.getGroups().getIpAddrees());
+			
+			if (exists()) {
+				delete();
+				create();
+			} else {
+				create();
+			}
+			
+			if (banType.equals(BanType.BANNED)) {
+				if (temporaryType.equals(TemporaryType.PERMANENT)) {
+					staffer.getPlayer().sendMessage("§4§lBAN §fVocê §4§lBANIU §fo jogador " + staffer.getPlayer().getName() + " §4§lPERMANENTEMENTE §fpelo motivo " + reason + " §fsem data de expiração.");
+				} else {
+					staffer.getPlayer().sendMessage("§4§lTEMPBAN §fVocê §4§lBANIU §fo jogador " + staffer.getPlayer().getName() + " §4§lTEMPORARIAMENTE §fpelo motivo " + reason + " §firá expirar em " + Longs.messageSmall(expire));
+				}
+			} else if (banType.equals(BanType.MUTATED)) {
+				if (temporaryType.equals(TemporaryType.PERMANENT)) {
+					staffer.getPlayer().sendMessage("§3§lMUTE §fVocê §3§lMUTOU §fo jogador " + staffer.getPlayer().getName() + " §3§lPERMANENTEMENTE §fpelo motivo " + reason + " §fsem data de expiração.");
+				} else {
+					staffer.getPlayer().sendMessage("§3§lTEMPMUTE §fVocê §3§lMUTOU §fo jogador " + staffer.getPlayer().getName() + " §3§lTEMPORARIAMENTE §fpelo motivo " + reason + " §firá expirar em " + Longs.messageSmall(expire) + ".");
+				}
+			}
+		} else {
+			if (punido.getPlayer().getName() == staffer.getPlayer().getName()) {
+				staffer.getPlayer().sendMessage("§c§lPUNISH §fVocê não pode punir a si mesmo.");
+				return;
+			}
+			
+			if (punido.getGroups().hasGroupPermission(staffer.getGroups().getGroupsType())) {
+				staffer.getPlayer().sendMessage("§c§lPUNISH §fVocê não pode punir esse jogador.");
+				return;
+			}
+			
+			this.player = punido.getPlayer().getName();
+			this.ipAddrees = punido.getGroups().getIpAddrees();
+			if (staffer.getPlayer() == null) {
+				this.staffer = "CONSOLE";
+			} else {
+				this.staffer = staffer.getPlayer().getName();
+			}
+			this.date = Date.getMonth();
+			this.banType = banType;
+			this.temporaryType = temporaryType;
+			this.reason = reason;
+			this.expire = expire;
+			
+			new PlayerLoginListener().blacklistedAddress.add(punido.getGroups().getIpAddrees());
+			
+			if (exists()) {
+				delete();
+				create();
+			} else {
+				create();
+			}
+			
+			if (banType.equals(BanType.BANNED)) {
+				if (temporaryType.equals(TemporaryType.PERMANENT)) {
+					staffer.getPlayer().sendMessage("§4§lBAN §fVocê §4§lBANIU §fo jogador " + staffer.getPlayer().getName() + " §4§lPERMANENTEMENTE §fpelo motivo " + reason + " §fsem data de expiração.");
+				} else {
+					staffer.getPlayer().sendMessage("§4§lTEMPBAN §fVocê §4§lBANIU §fo jogador " + staffer.getPlayer().getName() + " §4§lTEMPORARIAMENTE §fpelo motivo " + reason + " §firá expirar em " + Longs.messageSmall(expire));
+				}
+				if (punido.getPlayer() != null) {
+					punido.getPlayer().disconnect(messageOnEntry());
+				}
+			} else if (banType.equals(BanType.MUTATED)) {
+				if (temporaryType.equals(TemporaryType.PERMANENT)) {
+					staffer.getPlayer().sendMessage("§3§lMUTE §fVocê §3§lMUTOU §fo jogador " + staffer.getPlayer().getName() + " §3§lPERMANENTEMENTE §fpelo motivo " + reason + " §fsem data de expiração.");
+				} else {
+					staffer.getPlayer().sendMessage("§3§lTEMPMUTE §fVocê §3§lMUTOU §fo jogador " + staffer.getPlayer().getName() + " §3§lTEMPORARIAMENTE §fpelo motivo " + reason + " §firá expirar em " + Longs.messageSmall(expire) + ".");
+				}
+			}
+		}
+		
+		chatMessage();
+		if (punido.getPlayer() != null) {
+			punido.getPlayer().disconnect(messageOnEntry());
+		}
+		
+	}
+	
+	public boolean exists() {
+		try {
+			Statement statement = BungeeMain.getCore().getMySQL().getConnection().createStatement();
+			ResultSet resultSet = statement.executeQuery("SELECT * FROM `players_accounts_punish` WHERE `nickname` = '" + this.player + "';");
+			if (resultSet.next()) {
+				return resultSet.getString("nickname") != null;
+			}
+			resultSet.close();
+			statement.close();
+			return false;
+		} catch (Exception exception) {
+			exception.printStackTrace();
+			return true;
+		}
+	}
+	
+	public void create() {
+		try {
+			PreparedStatement preparedStatement = BungeeMain.getCore().getMySQL().getConnection().prepareStatement("SELECT * FROM `players_accounts_punish` WHERE (`nickname` = '" + this.player + "');");
+			preparedStatement.execute("INSERT INTO `players_accounts_punish` (`nickname`, `ipAddrees`, `date`, `type`, `temporary`, `staffer`, `reason`, `expire`) VALUES ('" + this.player + "', '" + getIpAddrees() + "', '" + getDate() + "', '" + getBanType() + "', '" + getTemporaryType() + "', '" + getStaffer() + "', '" + getReason() + "', '" + getExpire() + "');");
+			preparedStatement.close();
+		} catch (Exception exception) {
+			exception.printStackTrace();
+		}
+	}
+	
+	public void delete() {
+		try {
+			PreparedStatement preparedStatement = BungeeMain.getCore().getMySQL().getConnection().prepareStatement("SELECT * FROM `players_accounts_punish` WHERE (`nickname` = '" + this.player + "');");
+			preparedStatement.execute("DELETE FROM `players_accounts_punish` WHERE (`nickname` = '" + this.player + "');");
+			preparedStatement.close();
+		} catch (Exception exception) {
+			exception.printStackTrace();
+		}
+	}
+	
+	public void save() {
+		try {
+			Statement statement = BungeeMain.getCore().getMySQL().getConnection().createStatement();
+			statement.execute("UPDATE `players_accounts_punish` SET `ipAddrees` = '" + getIpAddrees() + "', `date` = '" + getDate() + "', `type` = '" + getBanType() + ", `temporary` = '" + getTemporaryType() + "', `staffer` = '" + getStaffer() + "', `reason` = '" + getReason() + "', `expire` = '" + getExpire() + "' WHERE (`nickname` = '" + this.player + "');");
+			statement.close();
+		} catch (Exception exception) {
+			exception.printStackTrace();
+		}
+	}
+	
+	@SuppressWarnings("deprecation")
+	public void chatMessage() {
+		for (ProxiedPlayer players : ProxyServer.getInstance().getPlayers()) {
+			AccountBungee account = new AccountBungee(players);
+			if (getBanType().equals(BanType.BANNED)) {
+				if (account.getGroups().hasGroupPermission(GroupsType.MODPLUS)) {
+					if (getTemporaryType().equals(TemporaryType.PERMANENT)) {
+						players.sendMessage("§4§lBAN §f" + this.player + " foi §4§lBANIDO PERMANENTEMENTE §fpor " + getStaffer() + " pelo motivo " + getReason());
+					} else {
+						players.sendMessage("§4§lTEMPBAN §f" + this.player + " foi §4§lBANIDO TEMPORARIAMENTE §fpor " + getStaffer() + " pelo motivo " + getReason());
+					}
+				}
+				if (getTemporaryType().equals(TemporaryType.PERMANENT)) {
+					players.sendMessage("§fO jogador " + this.player + " foi §4§lBANIDO PERMANENTEMENTE §fdo servidor.");
+				}
+			} else if (getBanType().equals(BanType.MUTATED)) {
+				if (account.getGroups().hasGroupPermission(GroupsType.MODPLUS)) {
+					if (getTemporaryType().equals(TemporaryType.PERMANENT)) {
+						players.sendMessage("§3§lMUTE §f" + this.player + " foi §3§lMUTADO PERMANENTEMENTE §fpor " + getStaffer() + " pelo motivo " + getReason());
+					} else {
+						players.sendMessage("§3§lTEMPMUTE §f" + this.player + " foi §3§lMUTADO TEMPORARIAMENTE §fpor " + getStaffer() + " pelo motivo " + getReason());
+					}
+				}
+				if (getTemporaryType().equals(TemporaryType.PERMANENT)) {
+					players.sendMessage("§fO jogador " + this.player + " foi §3§lMUTADO PERMANENTEMENTE §fdo servidor.");
+				}
+			}
+		}
+	}
+	
+	public String messageOnEntry() {
+		if (getTemporaryType().equals(TemporaryType.PERMANENT)) {
+			return Strings.getServer() + "\n" + "\n" + "§fSua conta foi suspensa permanentemente!" + "\n" + "§fO seu banimento irá expirar em §eNunca." + "\n" + "\n" + "§fBanido por §a" + getStaffer() + " §fpelo motivo §e" + getReason() + "§fno dia " + getDate() + "\n" + "\n" + "§fO banimento foi injusto? Preencha a §e§lAPPEAL §fem nosso site." + "\n" + "§fCaso contrario compre seu §2§lUNBAN §fem §3" + Strings.getWebstore();
+		} else {
+			return Strings.getServer() + "\n" + "\n" + "§fSua conta foi suspensa temporariamente!" + "\n" + "§fO seu banimento irá expirar em §e" + Longs.messageSmall(getExpire()) + "§f." + "\n" + "\n" + "§fBanido por §a" + getStaffer() + " §fpelo motivo §e" + getReason() + "§fno dia " + getDate() + "\n" + "\n" + "§fO banimento foi injusto? Preencha a §e§lAPPEAL §fem nosso site." + "\n" + "§fCaso contrario compre seu §2§lUNBAN §fem §3" + Strings.getWebstore();
+		}
+	}
+	
+}

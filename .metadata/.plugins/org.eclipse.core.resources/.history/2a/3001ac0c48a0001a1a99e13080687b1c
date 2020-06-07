@@ -1,0 +1,36 @@
+package br.com.frostmc.login.commands.player;
+
+import java.util.Arrays;
+
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
+
+import br.com.frostmc.login.FrostLogin;
+import br.com.frostmc.login.commands.BaseCommand;
+import br.com.frostmc.login.scoreboard.Scoreboarding;
+
+public class ScoreboardCommand extends BaseCommand {
+	
+	public ScoreboardCommand() {
+		super("scoreboard", "ative/desative a scoreboard", Arrays.asList("score", "scores"));
+	}
+
+	@Override
+	public boolean execute(CommandSender commandSender, String label, String[] args) {
+		if (isPlayer(commandSender)) {
+			Player player = getPlayer(commandSender);
+			if (FrostLogin.scoreboard.contains(player.getUniqueId())) {
+				FrostLogin.scoreboard.remove(player.getUniqueId());
+				Scoreboarding.removeScoreboard(player);
+				player.sendMessage("§7Sua §bSCOREBOARD§7 foi §cDESATIVADA§7. Para fazê-la voltar, repita o comando.");
+			} else {
+				FrostLogin.scoreboard.add(player.getUniqueId());
+				Scoreboarding.setScoreboard(player);
+				player.sendMessage("§7Sua §bSCOREBOARD§7 foi §aATIVADA§7. Para fazê-la sumir, repita o comando.");
+			}
+		} else {
+			return true;
+		}
+		return false;
+	}
+}

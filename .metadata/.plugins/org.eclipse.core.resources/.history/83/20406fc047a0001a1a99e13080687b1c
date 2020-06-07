@@ -1,0 +1,75 @@
+package br.com.frostmc.login.commands.player;
+
+import java.util.Arrays;
+
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
+
+import br.com.frostmc.common.BukkitMain;
+import br.com.frostmc.core.data.mysql.bukkit.AccountBukkit;
+import br.com.frostmc.core.data.mysql.bukkit.authentication.Authentication;
+import br.com.frostmc.core.util.enums.AuthType;
+import br.com.frostmc.login.FrostLogin;
+import br.com.frostmc.login.commands.BaseCommand;
+import br.com.frostmc.login.inventory.ManagerInventory;
+import br.com.frostmc.login.scoreboard.Scoreboarding;
+
+public class RegisterCommand extends BaseCommand {
+
+	public RegisterCommand() {
+		super("register", "register go to server", Arrays.asList("registrar", "registro"));
+	}
+
+	public String[] registerBlocks = new String[] { "senha", "123456", "654321", "password", "server", "server", "servidor" };
+	
+	@Override
+	public boolean execute(CommandSender commandSender, String label, String[] args) {
+		if (isPlayer(commandSender)) {
+			Player player = getPlayer(commandSender);
+			AccountBukkit account = new AccountBukkit(player);
+			Authentication authentication = account.getAuthentication();
+			if (!FrostLogin.checkToLogin.get(player.getUniqueId()).equals(AuthType.NONREGISTERED)) {
+				player.sendMessage("§c§lERRO §7Este nome de usuário já possui um registro em nosso servidor.");
+				return true;
+			}
+			if (args.length <= 1) {
+				player.sendMessage("§b§lLOGIN §7Utilize o comando: §a/register (senha) (confirmar senha)");
+				return true;
+			}
+			if (args.length == 2) {
+				if (args[0].length() < 5) {
+					player.sendMessage("§c§lERRO §7Sua senha deve conter no mínimo 6 digitos.");
+					return true;
+				}
+				if (args[1].equalsIgnoreCase(args[0])) {
+					for (String block : registerBlocks) {
+						if (args[0].contains(block)) {
+							player.sendMessage("§c§lERRO §7Sua senha está muito fraca.");
+							return true;
+						}
+					}
+					FrostLogin.checkToLogin.put(player.getUniqueId(), AuthType.LOGGED);
+					authentication.setIpAddrees(account.getGroups().getIpAddrees());
+					authentication.setAuthType(AuthType.LOGGED);
+					authentication.setPassword(args[0]);
+					authentication.save();
+					player.sendMessage("§b§lLOGIN §7Sua conta foi registrada com sucesso!");
+					if (BukkitMain.getPermissions().isTrial(player)) {
+						player.sendMessage("§b§lLOGIN §7Sua senha: §a" + args[0]);
+						player.sendMessage("§b§lLOGIN §7Seu codigo de segurança é: " + authentication.getSecurityCode());
+					}
+					ManagerInventory.sendItens(player);
+					Scoreboarding.setScoreboard(player);
+					return true;
+				} else  {
+					player.sendMessage("§b§lLOGIN §7Confirme sua senha.");
+					return true;
+				}
+			}
+		} else {
+			return true;
+		}
+		return false;
+	}
+
+}

@@ -1,0 +1,130 @@
+package br.com.frostmc.login.listeners;
+
+import org.bukkit.GameMode;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerLoginEvent;
+import org.bukkit.scheduler.BukkitRunnable;
+
+import br.com.frostmc.common.BukkitMain;
+import br.com.frostmc.common.util.TeleportServer;
+import br.com.frostmc.core.data.mysql.bukkit.AccountBukkit;
+import br.com.frostmc.core.data.mysql.bukkit.authentication.Authentication;
+import br.com.frostmc.core.util.enums.AuthType;
+import br.com.frostmc.core.util.enums.ServersType;
+import br.com.frostmc.login.FrostLogin;
+import br.com.frostmc.login.commands.player.LoginCommand;
+import br.com.frostmc.login.commands.staffer.BuildCommand;
+import br.com.frostmc.login.commands.staffer.BuildCommand.BuildModes;
+import br.com.frostmc.login.inventory.ManagerInventory;
+import br.com.frostmc.login.scoreboard.Scoreboarding;
+import br.com.frostmc.login.util.MessagesType;
+import br.com.frostmc.login.util.admin.Vanish;
+import br.com.frostmc.login.util.warp.WarpsAPI;
+import br.com.frostmc.login.util.warp.WarpsAPI.Warps;
+
+public class PlayerLoginListener implements Listener {
+	
+	@EventHandler
+	public void asd(PlayerLoginEvent event) {
+		Player player = event.getPlayer();
+		String address = event.getAddress().getHostAddress();
+		AccountBukkit account = new AccountBukkit(player);
+		Authentication authentication = account.getAuthentication();
+		if (authentication.exists()) {
+			if (!authentication.getAuthType().equals(AuthType.NONREGISTERED)) {
+				if (authentication.getIpAddrees().equals(address)) {
+					if (!authentication.getPassword().equals("null")) {
+						FrostLogin.checkToLogin.put(player.getUniqueId(), AuthType.LOGGED);
+						authentication.setAuthType(AuthType.LOGGED);
+						authentication.save();
+						new BukkitRunnable() {
+							public void run() {
+								TeleportServer.connectPlayer(player, ServersType.LOBBY);
+							}
+						}.runTaskLater(FrostLogin.getInstance(), 5L);
+					} else {
+						if (authentication.getAuthType().equals(AuthType.LOGGED)) {
+							FrostLogin.checkToLogin.put(player.getUniqueId(), AuthType.NONLOGGED);
+						} else if (authentication.getAuthType().equals(AuthType.NONLOGGED)) {
+							FrostLogin.checkToLogin.put(player.getUniqueId(), AuthType.NONLOGGED);
+						}
+					}
+				} else {
+					//authentication.setAuthType(AuthType.NONLOGGED);
+					//authentication.save();
+					if (authentication.getAuthType().equals(AuthType.LOGGED)) {
+						FrostLogin.checkToLogin.put(player.getUniqueId(), AuthType.NONLOGGED);
+					} else if (authentication.getAuthType().equals(AuthType.NONLOGGED)) {
+						FrostLogin.checkToLogin.put(player.getUniqueId(), AuthType.NONLOGGED);
+					}
+				}
+			} else {
+				FrostLogin.checkToLogin.put(player.getUniqueId(), AuthType.NONREGISTERED);
+			}
+		}
+	}
+	
+	@EventHandler
+	public void asd(PlayerJoinEvent event) {
+		event.setJoinMessage(null);
+		Player player = event.getPlayer();
+		player.getInventory().clear();
+		player.setGameMode(GameMode.SURVIVAL);
+		player.getActivePotionEffects().clear();
+		player.getInventory().setArmorContents(null);
+		player.setHealth(20.0D);
+		player.setFoodLevel(20);
+		player.setFireTicks(0);
+		player.setFlying(false);
+		player.setAllowFlight(false);
+		for (int i = 1;i <100; i++) {
+			player.sendMessage(" ");
+		}
+		if (FrostLogin.checkToLogin.containsKey(player.getUniqueId())) {
+			if (FrostLogin.checkToLogin.get(player.getUniqueId()).equals(AuthType.NONREGISTERED)) {
+				player.sendMessage("§8[§b§lLOGIN§8] §fSua conta não está registrada na rede.");
+			} else if (FrostLogin.checkToLogin.get(player.getUniqueId()).equals(AuthType.NONLOGGED)) {
+				player.sendMessage("§8[§b§lLOGIN§8] §fVocê não possui uma sessão validam");
+			} else if (FrostLogin.checkToLogin.get(player.getUniqueId()).equals(AuthType.LOGGED)) {
+				player.sendMessage("§8[§b§lLOGIN§8] §fClique na bússola para acessar o lobby principal.");
+				ManagerInventory.sendItens(player);
+			}
+		}
+		
+		new BukkitRunnable() {
+			public void run() {
+				if (FrostLogin.checkToLogin.containsKey(player.getUniqueId())) {
+					if (FrostLogin.checkToLogin.get(player.getUniqueId()).equals(AuthType.NONREGISTERED)) {
+						MessagesType.sendTitleMessage(player, "§b§lFrost§f§lNetwork");
+						MessagesType.sendSubTitleMessage(player, "§7/register (senha) (confirmar senha)");
+						player.sendMessage("§8[§b§lLOGIN§8] §fUtilize o comando: /register (senha) (confirmar senha)");
+					} else if (FrostLogin.checkToLogin.get(player.getUniqueId()).equals(AuthType.NONLOGGED)) {
+						if (!BukkitMain.getPermissions().isTrial(player)) {
+							MessagesType.sendTitleMessage(player, "§b§lFrost§f§lNetwork");
+							MessagesType.sendSubTitleMessage(player, "§7/login (senha)");
+							player.sendMessage("§8[§b§lLOGIN§8] §fUtilize o comando: /login (senha)");
+						} else {
+							MessagesType.sendTitleMessage(player, "§b§lFrost§f§lNetwork");
+							MessagesType.sendSubTitleMessage(player, "§7/login (senha) (codigo de segurança)");
+							player.sendMessage("§8[§b§lLOGIN§8] §fUtilize o comando: /login (senha) (codigo de segurança)");
+						}
+					} else {
+						cancel();
+					}
+				}
+			}
+		}.runTaskTimer(FrostLogin.getInstance(), 0L, 100L);
+		
+		BuildCommand.buildModes.put(player.getUniqueId(), BuildModes.OFF);
+		LoginCommand.errors.put(player.getUniqueId(), 0);
+		FrostLogin.scoreboard.add(player.getUniqueId());
+		Scoreboarding.setScoreboard(player);
+		WarpsAPI.setWarp(player, Warps.SPAWN);
+		WarpsAPI.goToWarp(player, Warps.SPAWN);
+		Vanish.updateVanished();
+	}
+	
+}

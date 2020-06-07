@@ -1,0 +1,6 @@
+name: FrostLogin
+version: 2.0.0-SNAPSHOT
+main: br.com.frostmc.login.FrostLogin
+authors: [shooyu]
+website: www.frostmc.com.br
+commands:

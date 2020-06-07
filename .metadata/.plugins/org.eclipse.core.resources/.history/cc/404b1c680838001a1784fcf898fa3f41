@@ -1,0 +1,88 @@
+package br.com.frostmc.core.data.mysql;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Statement;
+
+public class MySQL {
+
+	public String host, database, user, password;
+	public Connection connection;
+	public Statement statement;
+	
+	public String getHost() { return host; }
+	public String getDatabase() { return database; }
+	public String getUser() { return user; }
+	public String getPassword() { return password; }
+	
+	public Connection getConnection() { return connection; }
+	public Statement getStatement() { return statement; }
+	
+	//this.host = "35.247.193.169";
+	//this.database = "s1_frostmc";
+	//this.user = "u1_dKeLiJeb06";
+	//this.password = "pDYtO3o65L69hG1t";
+	
+	public MySQL() {
+		this.host = "localhost";
+		this.database = "server";
+		this.user = "root";
+		this.password = "@@@aA0408777";
+	}
+	
+	public synchronized void start() {
+		try {
+			this.connection = DriverManager.getConnection("jdbc:mysql://" + this.host + ":" + 3306 + "/" + this.database + "?autoReconnect=true", this.user, this.password);
+			this.statement = this.connection.createStatement();
+		} catch (SQLException exception) {
+			exception.printStackTrace();
+		}
+	}
+	
+	public synchronized void close() {
+		if(this.connection == null) {
+			return;
+		}
+		try {
+			this.connection.close();
+			if(this.statement != null) {
+				this.statement.close();
+			}
+			return;
+		} catch(Exception exception) {
+			exception.printStackTrace();
+			return;
+		}
+	}
+	
+	public synchronized void setup() {
+		try {
+			this.statement.execute("CREATE TABLE IF NOT EXISTS `players_authentication` (`id` INT UNSIGNED NOT NULL AUTO_INCREMENT, `uuid` VARCHAR(64) NOT NULL, `nickname` VARCHAR(64) NOT NULL, `status` VARCHAR(64) NOT NULL, `ipAddrees` VARCHAR(64) NOT NULL, `password` VARCHAR(64) NOT NULL, `securityCode` VARCHAR(64) NOT NULL, PRIMARY KEY(`id`)) ENGINE = InnoDB DEFAULT CHARSET = UTF8 AUTO_INCREMENT = 1;");
+			this.statement.execute("CREATE TABLE IF NOT EXISTS `server_quests` (`id` INT UNSIGNED NOT NULL AUTO_INCREMENT, `uuid` VARCHAR(64) NOT NULL, `nickname` VARCHAR(64) NOT NULL, `iron` INT NOT NULL, `gold` INT NOT NULL, `diamond` INT NOT NULL, `key_iron` INT NOT NULL, `key_gold` INT NOT NULL, `key_diamond` INT NOT NULL, PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=UTF8 AUTO_INCREMENT=1;");
+			this.statement.execute("CREATE TABLE IF NOT EXISTS `players_accounts` (`id` INT UNSIGNED NOT NULL AUTO_INCREMENT, `uuid` VARCHAR(64) NOT NULL, `nickname` VARCHAR(64) NOT NULL, `firstLogin` VARCHAR(64) NOT NULL, `lastLogin` VARCHAR(64) NOT NULL, `setBy` VARCHAR(64) NOT NULL, `ipAddrees` VARCHAR(64) NOT NULL, `group` VARCHAR(64) NOT NULL, `temporary` VARCHAR(64) NOT NULL, `expire` LONG NOT NULL, PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=UTF8 AUTO_INCREMENT=1;");
+			this.statement.execute("CREATE TABLE IF NOT EXISTS `players_accounts_punish` (`id` INT UNSIGNED NOT NULL AUTO_INCREMENT, `nickname` VARCHAR(64) NOT NULL, `ipAddrees` VARCHAR(64) NOT NULL, `date` VARCHAR(64) NOT NULL, `type` VARCHAR(64) NOT NULL, `temporary` VARCHAR(64) NOT NULL, `staffer` VARCHAR(64) NOT NULL, `reason` VARCHAR(64) NOT NULL, `expire` LONG NOT NULL, PRIMARY KEY(`id`)) ENGINE = InnoDB DEFAULT CHARSET = UTF8 AUTO_INCREMENT = 1;");
+			this.statement.execute("CREATE TABLE IF NOT EXISTS `players_accounts_doublexp` (`id` INT UNSIGNED NOT NULL AUTO_INCREMENT, `uuid` VARCHAR(64) NOT NULL, `nickname` VARCHAR(64) NOT NULL, `running` VARCHAR(64) NOT NULL, `quantity` INT NOT NULL, `expire` LONG NOT NULL, PRIMARY KEY(`id`)) ENGINE = InnoDB DEFAULT CHARSET = UTF8 AUTO_INCREMENT = 1;");
+			this.statement.execute("CREATE TABLE IF NOT EXISTS `players_stats_global` (`id` INT UNSIGNED NOT NULL AUTO_INCREMENT, `uuid` VARCHAR(64) NOT NULL, `nickname` VARCHAR(64) NOT NULL, `league` VARCHAR(64) NOT NULL, `xp` INT NOT NULL, `moedas` INT NOT NULL, `fichas` INT NOT NULL, PRIMARY KEY(`id`)) ENGINE = InnoDB DEFAULT CHARSET = UTF8 AUTO_INCREMENT = 1;");
+			this.statement.execute("CREATE TABLE IF NOT EXISTS `players_stats_hg` (`id` INT UNSIGNED NOT NULL AUTO_INCREMENT, `uuid` VARCHAR(64) NOT NULL, `nickname` VARCHAR(64) NOT NULL, `kills` INT NOT NULL, `deaths` INT NOT NULL, `wins` INT NOT NULL, PRIMARY KEY(`id`)) ENGINE = InnoDB DEFAULT CHARSET = UTF8 AUTO_INCREMENT = 1;");
+			this.statement.execute("CREATE TABLE IF NOT EXISTS `players_stats_pvp` (`id` INT UNSIGNED NOT NULL AUTO_INCREMENT, `uuid` VARCHAR(64) NOT NULL, `nickname` VARCHAR(64) NOT NULL, `kills` INT NOT NULL, `deaths` INT NOT NULL, `killstreak` INT NOT NULL, `lava_easy` INT NOT NULL, `lava_medium` INT NOT NULL, `lava_hard` INT NOT NULL, `lava_extreme` INT NOT NULL, PRIMARY KEY(`id`)) ENGINE = InnoDB DEFAULT CHARSET = UTF8 AUTO_INCREMENT = 1;");
+			this.statement.execute("CREATE TABLE IF NOT EXISTS `players_stats_1v1` (`id` INT UNSIGNED NOT NULL AUTO_INCREMENT, `uuid` VARCHAR(64) NOT NULL, `nickname` VARCHAR(64) NOT NULL, `victory` INT NOT NULL, `defeat` INT NOT NULL, `winstreak` INT NOT NULL, PRIMARY KEY(`id`)) ENGINE = InnoDB DEFAULT CHARSET = UTF8 AUTO_INCREMENT = 1;");
+			this.statement.execute("CREATE TABLE IF NOT EXISTS `players_stats_gladiator` (`id` INT UNSIGNED NOT NULL AUTO_INCREMENT, `uuid` VARCHAR(64) NOT NULL, `nickname` VARCHAR(64) NOT NULL, `victory` INT NOT NULL, `defeat` INT NOT NULL, `winstreak` INT NOT NULL, PRIMARY KEY(`id`)) ENGINE = InnoDB DEFAULT CHARSET = UTF8 AUTO_INCREMENT = 1;");
+			this.statement.execute("CREATE TABLE IF NOT EXISTS `players_event_blacklist` (`id` INT UNSIGNED NOT NULL AUTO_INCREMENT, `uuid` VARCHAR(64) NOT NULL, `nickname` VARCHAR(64) NOT NULL, `staffer` VARCHAR(64) NOT NULL, `ipAddrees` VARCHAR(64) NOT NULL, `temporary` VARCHAR(64) NOT NULL, `expire` LONG NOT NULL, PRIMARY KEY(`id`)) ENGINE = InnoDB DEFAULT CHARSET = UTF8 AUTO_INCREMENT = 1;");
+			this.statement.execute("CREATE TABLE IF NOT EXISTS `server_event` (`promotor` VARCHAR(64) NOT NULL, `type` VARCHAR(64) NOT NULL, `running` VARCHAR(64) NOT NULL, PRIMARY KEY(`running`)) ENGINE = InnoDB DEFAULT CHARSET = UTF8 AUTO_INCREMENT = 1;");
+			this.statement.execute("CREATE TABLE IF NOT EXISTS `server_list` (`ip` VARCHAR(64) NOT NULL, `nome` VARCHAR(64) NOT NULL, `onlineplayers` INT NOT NULL, `maxplayers` INT NOT NULL, `motd` VARCHAR(64) NOT NULL) ENGINE = InnoDB DEFAULT CHARSET = UTF8 AUTO_INCREMENT = 1;");
+			this.statement.execute("CREATE TABLE IF NOT EXISTS `server_beneficy` (`running` VARCHAR(64) NOT NULL, `beneficy` VARCHAR(64) NOT NULL, PRIMARY KEY(`running`)) ENGINE = InnoDB DEFAULT CHARSET = UTF8 AUTO_INCREMENT = 1;");
+			this.statement.execute("CREATE TABLE IF NOT EXISTS `server_buy_kits_pvp` (`nickname` VARCHAR(64) NOT NULL, `kit` VARCHAR(64) NOT NULL) ENGINE = InnoDB DEFAULT CHARSET = UTF8;");
+			this.statement.execute("CREATE TABLE IF NOT EXISTS `server_buy_kits_hg` (`nickname` VARCHAR(64) NOT NULL, `kit` VARCHAR(64) NOT NULL) ENGINE = InnoDB DEFAULT CHARSET = UTF8;");
+			this.statement.execute("CREATE TABLE IF NOT EXISTS `server_diary_pvp` (`id` INT UNSIGNED NOT NULL AUTO_INCREMENT, `uuid` VARCHAR(64) NOT NULL, `nickname` VARCHAR(64) NOT NULL, `kit` VARCHAR(64) NOT NULL, `expire` LONG NOT NULL, PRIMARY KEY(`id`)) ENGINE = InnoDB DEFAULT CHARSET = UTF8;");
+			this.statement.execute("CREATE TABLE IF NOT EXISTS `server_diary_hg` (`id` INT UNSIGNED NOT NULL AUTO_INCREMENT, `uuid` VARCHAR(64) NOT NULL, `nickname` VARCHAR(64) NOT NULL, `kit` VARCHAR(64) NOT NULL, `expire` LONG NOT NULL, PRIMARY KEY(`id`)) ENGINE = InnoDB DEFAULT CHARSET = UTF8;");
+			this.statement.execute("CREATE TABLE IF NOT EXISTS `server_event` (`promotor` VARCHAR(64) NOT NULL, `type` VARCHAR(64) NOT NULL, `running` VARCHAR(64) NOT NULL, PRIMARY KEY(`running`)) ENGINE = InnoDB DEFAULT CHARSET = UTF8 AUTO_INCREMENT = 1;");
+			this.statement.execute("CREATE TABLE IF NOT EXISTS `kits_rotation` (`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT, `rank` VARCHAR(64) NOT NULL, `kit` VARCHAR(64) NOT NULL, PRIMARY KEY(`id`)) ENGINE = InnoDB DEFAULT CHARSET = UTF8 AUTO_INCREMENT = 1;");
+			this.statement.execute("CREATE TABLE IF NOT EXISTS `clan_status` (`id` INT UNSIGNED NOT NULL AUTO_INCREMENT, `owner` VARCHAR(64) NOT NULL, `nameClan` VARCHAR(64) NOT NULL, `tagClan` VARCHAR(64) NOT NULL, `league` VARCHAR(64) NOT NULL, `xp` INT NOT NULL, `vitorias` INT NOT NULL, `derrotas` INT NOT NULL, PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=UTF8 AUTO_INCREMENT=1 ;");
+			this.statement.execute("CREATE TABLE IF NOT EXISTS `clan_group` (`id` INT UNSIGNED NOT NULL AUTO_INCREMENT, `uuid` varchar(64) NOT NULL, `nickname` VARCHAR(64) NOT NULL, `nameClan` VARCHAR(64) NOT NULL, `group` VARCHAR(64) NOT NULL, PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=UTF8 AUTO_INCREMENT=1 ;");
+		} catch (Exception exception) {
+			exception.printStackTrace();
+		}
+	}
+	
+}

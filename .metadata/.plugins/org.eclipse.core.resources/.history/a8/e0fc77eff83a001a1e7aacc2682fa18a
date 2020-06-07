@@ -1,0 +1,34 @@
+package br.com.frostmc.core.data.mysql.bungeecord;
+
+import br.com.frostmc.core.data.mysql.bungeecord.group.Groups;
+import br.com.frostmc.core.data.mysql.bungeecord.group.loads.LoadingGroups;
+import br.com.frostmc.core.data.mysql.bungeecord.punishments.Punishs;
+import br.com.frostmc.core.data.mysql.bungeecord.punishments.loads.LoadingPunishs;
+import net.md_5.bungee.api.ProxyServer;
+import net.md_5.bungee.api.connection.ProxiedPlayer;
+
+public class AccountBungee {
+	
+	public Groups groups;
+	public Punishs punishs;
+	public ProxiedPlayer player;
+	
+	public AccountBungee(ProxiedPlayer player) {
+		this.player = player;
+		this.groups = LoadingGroups.load(player.getName());
+		this.punishs = LoadingPunishs.load(player.getName());
+	}
+	
+	public AccountBungee(String player) {
+		this.player = ProxyServer.getInstance().getPlayer(player);
+		this.groups = LoadingGroups.load(player);
+		this.punishs = LoadingPunishs.load(player);
+	}
+	
+	public ProxiedPlayer getPlayer() { return player; }
+	
+	public Groups getGroups() { return groups; }
+	
+	public Punishs getPunishs() { return punishs; }
+	
+}

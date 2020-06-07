@@ -1,0 +1,6 @@
+name: FrostHG
+version: 2.0.0-SNAPSHOT
+main: br.com.frostmc.hardcoregames.FrostHG
+author: Shooyu - @shooyutt
+website: www.frostmc.com.br
+commands:

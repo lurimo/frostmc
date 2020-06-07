@@ -1,0 +1,36 @@
+package br.com.frostmc.pvp.command.player;
+
+import java.util.Arrays;
+
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
+
+import br.com.frostmc.pvp.FrostPvP;
+import br.com.frostmc.pvp.command.BaseCommand;
+import br.com.frostmc.pvp.scoreboard.Scoreboarding;
+
+public class ScoreboardCommand extends BaseCommand {
+	
+	public ScoreboardCommand() {
+		super("scoreboard", "ative/desative a scoreboard", Arrays.asList("score", "scores"));
+	}
+
+	@Override
+	public boolean execute(CommandSender commandSender, String label, String[] args) {
+		if (isPlayer(commandSender)) {
+			Player player = getPlayer(commandSender);
+			if (FrostPvP.scoreboard.contains(player.getUniqueId())) {
+				FrostPvP.scoreboard.remove(player.getUniqueId());
+				Scoreboarding.removeScoreboard(player);
+				player.sendMessage("§c§lSCORE §7Sua scoreboard foi §cDESATIVADA§7. Para fazê-la voltar, digite §a/score§7 novamente.");
+			} else {
+				FrostPvP.scoreboard.add(player.getUniqueId());
+				Scoreboarding.setScoreboard(player);
+				player.sendMessage("§a§lSCORE §7Sua scoreboard foi §aATIVADA§7 novamente. Para fazê-la sumir, digite §a/score§7 novamente.");
+			}
+		} else {
+			return true;
+		}
+		return false;
+	}
+}

@@ -1,0 +1,6 @@
++name: FrostPvP
+version: 2.0.0-SNAPSHOT
+main: br.com.frostmc.pvp.FrostPvP
+authors: [shooyu, kingoz]
+website: www.frostmc.com.br
+commands:

@@ -1,0 +1,117 @@
+package br.com.frostmc.login.commands.player;
+
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.UUID;
+
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
+
+import br.com.frostmc.common.BukkitMain;
+import br.com.frostmc.core.data.mysql.bukkit.AccountBukkit;
+import br.com.frostmc.core.data.mysql.bukkit.authentication.Authentication;
+import br.com.frostmc.core.util.Strings;
+import br.com.frostmc.core.util.enums.AuthType;
+import br.com.frostmc.login.FrostLogin;
+import br.com.frostmc.login.commands.BaseCommand;
+import br.com.frostmc.login.inventory.ManagerInventory;
+import br.com.frostmc.login.scoreboard.Scoreboarding;
+
+public class LoginCommand extends BaseCommand {
+
+	public LoginCommand() {
+		super("login", "login go to server", Arrays.asList("logar"));
+	}
+	
+	public static HashMap<UUID, Integer> errors = new HashMap<UUID, Integer>();
+	
+	@Override
+	public boolean execute(CommandSender commandSender, String label, String[] args) {
+		if (isPlayer(commandSender)) {
+			Player player = getPlayer(commandSender);
+			AccountBukkit account = new AccountBukkit(player);
+			Authentication authentication = account.getAuthentication();
+			if (FrostLogin.checkToLogin.get(player.getUniqueId()).equals(AuthType.LOGGED)) {
+				player.sendMessage("§8[§c§lERRO§8] §fSua conta já está logada.");
+				return true;
+			}
+			if (args.length == 0) {
+				if (BukkitMain.getPermissions().isTrial(player)) {
+					player.sendMessage("§b§lFROST§f§lMC");
+					player.sendMessage("");
+					player.sendMessage("§8[§b§lLOGIN§8] §fBem-vindo de volta! Utilize o comando: §a/login (senha) (codigo de segurança)");
+				} else {
+					player.sendMessage("§b§lFROST§f§lMC");
+					player.sendMessage("");
+					player.sendMessage("§8[§b§lLOGIN§8] §fBem-vindo de volta! Utilize o comando: §a/login (senha)");
+				}
+				return true;
+			}
+			if (args.length == 1)  {
+				if (!BukkitMain.getPermissions().isTrial(player)) {
+					if(args[0].equalsIgnoreCase((String) authentication.getPassword())) {
+						FrostLogin.checkToLogin.put(player.getUniqueId(), AuthType.LOGGED);
+						authentication.setAuthType(AuthType.LOGGED);
+						authentication.setIpAddrees(account.getGroups().getIpAddrees());
+						authentication.save();
+						ManagerInventory.sendItens(player);
+						Scoreboarding.setScoreboard(player);
+						player.sendMessage("§8[§b§lLOGIN§8] §fVocê efetuou o login com sucesso.");
+						player.sendMessage("§8[§b§lLOGIN§8] §fUtilize a bússola para acessar o lobby.");
+						return true;
+					} else {
+						if (errors.get(player.getUniqueId()) == 3) {
+							errors.remove(player.getUniqueId());
+							player.kickPlayer("§8[§c§lERRO§8]" + "\n" + "\n" + "§fVocê errou sua senha mais de 3 vezes!" + "\n" + "§fEsqueceu sua senha? Entre em contato com um Administrador." + "\n" + "\n" + "§b" + Strings.getWebsite());
+							return true;
+						}
+						errors.put(player.getUniqueId(), errors.get(player.getUniqueId()) + 1);
+						player.sendMessage("§8[§c§lERRO§8] §fA senha inserida não corresponde com o nosso banco de dados. Tente novamente.");
+					}
+				} else {
+					player.sendMessage("§b§lLOGIN §7Utilize o comando: §a/login " + args[0] + " (codigo de segurança)");
+					player.sendMessage("§b§lLOGIN §7Digite seu codigo de segurança.");
+					return true;
+				}
+			}
+			if (args.length == 2) {
+				if (BukkitMain.getPermissions().isTrial(player)) {
+					if (args[1].equalsIgnoreCase((String) authentication.getSecurityCode())) {
+						if(args[0].equalsIgnoreCase((String) authentication.getPassword())) {
+							FrostLogin.checkToLogin.put(player.getUniqueId(), AuthType.LOGGED);
+							authentication.setAuthType(AuthType.LOGGED);
+							authentication.setIpAddrees(account.getGroups().getIpAddrees());
+							authentication.save();
+							ManagerInventory.sendItens(player);
+							Scoreboarding.setScoreboard(player);
+							player.sendMessage("§b§lLOGIN §7Você efetuou o login com sucesso.");
+							player.sendMessage("§b§lLOGIN §7Utilize a bússola para acessar o lobby!");
+							return true;
+						} else {
+							if (errors.get(player.getUniqueId()) == 3) {
+								errors.remove(player.getUniqueId());
+								player.kickPlayer("§c§lERRO" + "\n" + "\n" + "§fVocê errou sua senha mais de 3 vezes!" + "\n" + "§fEsqueceu sua senha? Entre em contato com um Administrador." + "\n" + "\n" + "§3" + Strings.getWebsite());
+								return true;
+							}
+							errors.put(player.getUniqueId(), errors.get(player.getUniqueId()) + 1);
+							player.sendMessage("§c§lERRO §f7A senha inserida não corresponde com o nosso banco de dados. Tente novamente.");
+						}
+					} else {
+						if (!args[1].contains("#")) {
+							player.sendMessage("§c§lERRO §7Você deve inserir a §aHASHTAG §7no começo do codigo. Exemplo: #12345");
+							return true;
+						} else {
+							player.sendMessage("§c§lERRO §7Seu codigo de segurança está incorreto. Tente novamente.");
+							return true;
+						}
+					}
+				}
+			}
+		} else {
+			return true;
+		}
+		return false;
+	}
+
+
+}

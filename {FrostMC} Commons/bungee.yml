@@ -1,0 +1,8 @@
+name: FrostCommons
+version: 2.0.0-SNAPSHOT
+main: br.com.frostmc.bungeecord.BungeeMain
+authors: [shooyu, king]
+website: www.frostmc.com.br
+commands:
+  aviso:
+    aliases: [broadcast, bc]

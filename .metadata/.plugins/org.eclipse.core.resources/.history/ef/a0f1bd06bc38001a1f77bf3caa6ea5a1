@@ -1,0 +1,61 @@
+package br.com.frostmc.core.util;
+
+public class Strings {
+	
+	public static String server, prefix, permission, twitter, discord, website, webstore;
+	
+	static {
+		server = "§b§lFROST§f§lMC";
+		prefix = server + "§8» ";
+		permission = "§4§lPERMISSÃO §fVocê não possui permissão para executar está ação.";
+		twitter = "@_FrostMC";
+		discord = "bit.ly/frostdc";
+		website = "www.frostmc.com.br";
+		webstore = "loja.frostmc.com.br";
+	}
+	
+	public static String getServer() { return server; }
+	public static String getPrefix() { return prefix; }
+	public static String getPermission() { return permission; }
+	public static String getTwitter() { return twitter; }
+	public static String getDiscord() { return discord; }
+	public static String getWebsite() { return website; }
+	public static String getWebstore() { return webstore; }
+
+	public static String getServerIP(String serverName) {
+		if (serverName.toLowerCase().startsWith("skywars-")) {
+			return "a" + serverName.replace("SKYWARS-".toLowerCase(), "") + ".skywars.frostmc.com.br";
+		}
+		if (serverName.toLowerCase().startsWith("party-")) {
+			return "a" + serverName.replace("PARTY-".toLowerCase(), "") + ".party.frostmc.com.br";
+		}
+		if (serverName.toLowerCase().startsWith("hg-")) {
+			return serverName.replace("HG-".toLowerCase(), "") + ".hg.frostmc.com.br";
+		}
+		if (serverName.toLowerCase().startsWith("evento")) {
+			return "evento.frostmc.com.br";
+		}
+		if (serverName.toLowerCase().startsWith("ss")) {
+			return "ss.frostmc.com.br";
+		}
+		if (serverName.toLowerCase().startsWith("build")) {
+			return "build.frostmc.com.br";
+		}
+		if (serverName.toLowerCase().startsWith("gladiator")) {
+			return "gladiator.frostmc.com.br";
+		}
+		if (serverName.toLowerCase().startsWith("onevsone")) {
+			return "1v1.frostmc.com.br";
+		}
+		if (serverName.toLowerCase().startsWith("pvp")) {
+			return "pvp.frostmc.com.br";
+		}
+		if (serverName.toLowerCase().startsWith("lobby")) {
+			return "lobby.frostmc.com.br";
+		}
+		if (serverName.toLowerCase().startsWith("login")) {
+			return "login.frostmc.com.br";
+		}
+		return "Server does not match the defaults to inform the IP.";
+	}
+}

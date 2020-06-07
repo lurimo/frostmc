@@ -1,0 +1,136 @@
+package br.com.frostmc.common.listener;
+
+import java.sql.ResultSet;
+import java.sql.Statement;
+import java.util.HashMap;
+
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerLoginEvent;
+import org.bukkit.event.player.PlayerLoginEvent.Result;
+
+import br.com.frostmc.common.BukkitMain;
+import br.com.frostmc.common.command.player.TellCommand;
+import br.com.frostmc.common.command.player.TellCommand.TellModes;
+import br.com.frostmc.common.util.tag.Tags;
+import br.com.frostmc.core.data.mysql.bukkit.AccountBukkit;
+import br.com.frostmc.core.util.Strings;
+import br.com.frostmc.core.util.enums.AuthType;
+import br.com.frostmc.core.util.information.Date;
+
+public class PlayerJoinListener implements Listener {
+	
+	public static HashMap<String, Integer> position = new HashMap<>();
+	
+	public static void loadPosition() {
+		try {
+			int x = 0;
+			Statement statement = BukkitMain.getCore().getMySQL().getConnection().createStatement();
+			ResultSet resultSet = statement.executeQuery("SELECT * FROM `players_stats_global` ORDER BY `xp` DESC;");
+			while (resultSet.next()) {
+				x++;
+				if (!position.containsKey(resultSet.getString("nickname"))) {
+					position.put(resultSet.getString("nickname"), x);
+				} else {
+					position.clear();
+					loadPosition();
+				}
+			}
+			resultSet.close();
+			statement.close();
+		} catch (Exception exception) {
+			exception.printStackTrace();
+		}
+	}
+	
+	@EventHandler
+	public void asd(PlayerLoginEvent event) {
+		Player player = event.getPlayer();
+		String address = event.getAddress().getHostAddress();
+		AccountBukkit account = new AccountBukkit(player);
+		try {
+			
+			if (event.getResult() == Result.KICK_FULL) {
+				if (!BukkitMain.getPermissions().isLight(player)) {
+					event.disallow(Result.KICK_OTHER, "§6§lSERVER §fO servidor está lotado! Compre §a§lVIP§f em §b§l" + Strings.getWebstore().toUpperCase() + " §fpara entrar ou tente novamente em §c§lBREVE!");
+				} else {
+					event.allow();
+				}
+			}
+			
+			if (!account.getAuthentication().exists()) {
+				account.getAuthentication().setAuthType(AuthType.NONREGISTERED);
+				account.getAuthentication().setIpAddrees(address);
+				account.getAuthentication().setSecurityCode();
+				account.getAuthentication().create();
+			} else {
+				if (!account.getAuthentication().getAuthType().equals(AuthType.NONREGISTERED)) {
+					account.getAuthentication().setAuthType(AuthType.NONLOGGED);
+					account.getAuthentication().save();
+				}
+			}
+			
+			if (!account.getGroups().exists()) {
+				account.getGroups().setSetBy("CONSOLE");
+				account.getGroups().setFirstLogin(Date.getDate());
+				account.getGroups().setLastLogin(Date.getDate());
+				account.getGroups().setIpAddrees(address);
+				account.getGroups().create();
+			} else {
+				account.getGroups().setLastLogin(Date.getDate());
+				account.getGroups().setIpAddrees(address);
+				account.getGroups().save();
+			}
+			
+			if (event.getResult() == PlayerLoginEvent.Result.KICK_WHITELIST) {
+				if (!BukkitMain.getPermissions().isBuilder(player)) {
+					event.disallow(PlayerLoginEvent.Result.KICK_WHITELIST, "§4§lMAINTENANCE §fEsse servidor está com acesso restrito.");
+					return;
+				} else {
+					event.allow();
+				}
+			}
+			
+			if (!account.getStatsPvP().exists()) {
+				account.getStatsPvP().create();
+			}
+			
+			if (!account.getStatsHG().exists()) {
+				account.getStatsHG().create();
+			}
+			
+			if (!account.getDoubleXP().exists()) {
+				account.getDoubleXP().create();
+				
+			}
+			if (!account.getStatsGlobal().exists()) {
+				account.getStatsGlobal().create();
+			}
+			
+			if (!account.getQuests().exists()) {
+				account.getQuests().create();
+			}
+			
+			BukkitMain.getGamerManager().addGamer(player).loadProfile();
+			System.out.println("[ACCOUNT] " + player.getName() + " logado com sucesso.");
+		} catch (Exception exception) {
+			exception.printStackTrace();
+			event.disallow(Result.KICK_OTHER, "§3§lACCOUNT" + "\n" + "\n" + "§fOcorreu um erro ao carregar seus dados!" + "\n" + "§fTente relogar para fixar seus dados corretamene." + "\n" + "\n" + "§3" + Strings.getWebsite());
+		}
+	}
+	
+	@EventHandler
+	public void asd(PlayerJoinEvent event) {
+		event.setJoinMessage(null);
+		Player player = event.getPlayer();
+		String address = player.getAddress().getAddress().getHostAddress();
+		Tags.findTag(player);
+		AccountBukkit account = new AccountBukkit(player);
+		account.getStatsGlobal().checkRank();
+		System.out.println("[ACCOUNT] " + player.getName() + " logado com sucesso. (IP: " + address + ")");
+		TellCommand.tellModes.put(player.getUniqueId(), TellModes.ON);
+	}
+	
+}

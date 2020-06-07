@@ -1,0 +1,22 @@
+package br.com.frostmc.common.util.cooldown.item;
+
+import org.bukkit.inventory.ItemStack;
+
+import br.com.frostmc.common.util.cooldown.Cooldown;
+import lombok.Getter;
+import lombok.Setter;
+
+public class ItemCooldown extends Cooldown {
+
+    @Getter
+    private ItemStack item;
+
+    @Getter
+    @Setter
+    private boolean selected;
+
+    public ItemCooldown(ItemStack item, String name, Long duration) {
+        super();
+        this.item = item;
+    }
+}

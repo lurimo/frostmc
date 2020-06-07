@@ -1,0 +1,304 @@
+package br.com.frostmc.lobby.scoreboard;
+
+import java.text.NumberFormat;
+
+import org.bukkit.Bukkit;
+import org.bukkit.craftbukkit.v1_7_R4.entity.CraftPlayer;
+import org.bukkit.entity.Player;
+import org.bukkit.scoreboard.DisplaySlot;
+import org.bukkit.scoreboard.Objective;
+import org.bukkit.scoreboard.Scoreboard;
+import org.bukkit.scoreboard.Team;
+import org.spigotmc.ProtocolInjector;
+import org.spigotmc.ProtocolInjector.PacketTabHeader;
+
+import br.com.frostmc.common.BukkitMain;
+import br.com.frostmc.common.listener.PlayerJoinListener;
+import br.com.frostmc.common.util.gamer.Gamer;
+import br.com.frostmc.core.data.mysql.bukkit.AccountBukkit;
+import br.com.frostmc.core.util.Strings;
+import br.com.frostmc.core.util.enums.GroupsType;
+import br.com.frostmc.core.util.enums.LeagueClanType;
+import br.com.frostmc.core.util.enums.LeagueType;
+import br.com.frostmc.core.util.enums.ServersType;
+import br.com.frostmc.lobby.FrostLobby;
+import br.com.frostmc.lobby.util.server.PingManager;
+import net.minecraft.server.v1_7_R4.ChatSerializer;
+import net.minecraft.server.v1_7_R4.IChatBaseComponent;
+
+public class Scoreboarding {
+	
+	/**
+	 * @shooyutt
+	 */
+	
+	public static String title = "§b§lFROST NETWORK";
+	public static int integer = 0;
+	
+	public static String next() {
+		integer++;
+		if (integer == 0) {
+			title = "§b§lF§f§lROST NETWORK";
+		}
+		if (integer == 1) {
+			title = "§3§lF§b§lR§f§lOST NETWORK";
+		}
+		if (integer == 2) {
+			title = "§3§lFR§b§lO§f§lST NETWORK";
+		}
+		if (integer == 3) {
+			title = "§3§lFRO§b§lS§f§lT NETWORK";
+		}
+		if (integer == 4) {
+			title = "§3§lFROS§b§lT §f§lNETWORK";
+		}
+		if (integer == 5) {
+			title = "§3§lFROST §b§lN§f§lETWORK";
+		}
+		if (integer == 6) {
+			title = "§3§lFROST N§b§lE§f§lTWORK";
+		}
+		if (integer == 7) {
+			title = "§3§lFROST NE§b§lT§f§lWORK";
+		}
+		if (integer == 8) {
+			title = "§3§lFROST NET§b§lW§f§lORK";
+		}
+		if (integer == 9) {
+			title = "§3§lFROST NETW§b§lO§f§lRK";
+		}
+		if (integer == 10) {
+			title = "§3§lFROST NETWO§b§lR§f§lK";
+		}
+		if (integer == 11) {
+			title = "§3§lFROST NETWORK";
+		}
+		if (integer == 12) {
+			title = "§b§lF§3§lROST NETWORK";
+		}
+		if (integer == 13) {
+			title = "§f§lF§b§lR§3§lOST NETWORK";
+		}
+		if (integer == 14) {
+			title = "§f§lFR§b§lO§3§lST NETWORK";
+		}
+		if (integer == 15) {
+			title = "§f§lFRO§b§lS§3§lT NETWORK";
+		}
+		if (integer == 16) {
+			title = "§f§lFROS§b§lT §3§lNETWORK";
+		}
+		if (integer == 17) {
+			title = "§f§lFROST §b§lN§3§lETWORK";
+		}
+		if (integer == 18) {
+			title = "§f§lFROST N§b§lE§3§lTWORK";
+		}
+		if (integer == 19) {
+			title = "§f§lFROST NE§b§lT§3§lWORK";
+		}
+		if (integer == 20) {
+			title = "§f§lFROST NET§b§lW§3§lORK";
+		}
+		if (integer == 21) {
+			title = "§f§lFROST NETW§b§lO§3§lRK"; 
+		}
+		if (integer == 22) {
+			title = "§f§lFROST NETWO§b§lR§3§lK";
+		}
+		if (integer == 23) {
+			title = "§f§lFROST NETWOR§b§lK";
+		}
+		if (integer == 24) {
+			title = "§f§lFROST NETWORK";
+			integer = 0;
+		}
+		return title;
+	}
+	
+	public static String getTitle() {
+		return title;
+	}
+	
+	public static void setScoreboard(Player player) {
+		if (FrostLobby.scoreboard.contains(player.getUniqueId())) {
+			sendScoreboard(player);
+		}
+		setTab(player);
+	}
+	
+	public static void setTab(Player player) {
+		AccountBukkit account = new AccountBukkit(player);
+		String nameClan = account.getClan().getGroupClan().getClan();
+		String tagClan = account.getClan().getStatusClan().getClanTag();
+		LeagueClanType leagueClan = account.getClan().getStatusClan().getLeagueType();
+		String xpClan = NumberFormat.getInstance().format(account.getClan().getStatusClan().getXp());
+		Gamer gamer = BukkitMain.getGamerManager().getGamer(player);
+		LeagueType league = gamer.getLeagueType();
+		String xp = NumberFormat.getInstance().format(gamer.getXp());
+		sendTab(player, Strings.server + "\n", "\n" + "§bStatus: §f(§a" + player.getName() + "§f) §bLiga: " + league.fullName() + " §bXP: §9" + xp + (nameClan == null ? "\n" : "\n" + "§3Clan: §f(§a" + nameClan + "§f) Tag: §a" + tagClan + " §3- §fLiga: " + leagueClan.fullName() + " " + account.getClan().getStatusClan().getRankPosition() + " §3- §fXP: §9" + xpClan + "\n") + "\n" + "§fMais informações acesse §3" + Strings.getWebstore());
+	}
+	
+	public static void updateTittle(Player player) {
+		if (player == null) {
+			return;
+		}
+		if (player.getScoreboard() == null) {
+			return;
+		}
+		if (!player.isOnline()) {
+			return;
+		}
+		Objective obj = player.getScoreboard().getObjective("score");
+		obj.setDisplayName(getTitle());
+	}
+	
+	public static void updatePosition(Player player) {
+		PlayerJoinListener.loadPosition();
+		if (player.getScoreboard() == null) {
+			return;
+		}
+		if (!player.isOnline()) {
+			return;
+		}
+		Team team = null;
+		
+		if (player.getScoreboard().getTeam("position") == null) {
+			team = player.getScoreboard().registerNewTeam("position");
+		} else {
+			team = player.getScoreboard().getTeam("position");
+		}
+		team.setSuffix(" §a" + PlayerJoinListener.position.get(player.getName()) + "º");
+	}
+	
+	public static void updatePlayers(Player player) {
+		PingManager players = new PingManager(ServersType.DEFAULT_SERVER);
+		
+		if (player.getScoreboard() == null) {
+			return;
+		}
+		if (!player.isOnline()) {
+			return;
+		}
+		Team team = null;
+		
+		if (player.getScoreboard().getTeam("jogadores") == null) {
+			team = player.getScoreboard().registerNewTeam("jogadores");
+		} else {
+			team = player.getScoreboard().getTeam("jogadores");
+		}
+		team.setSuffix(" §a" + players.getOnlinePlayers());
+	}
+	
+	public static void updateCash(Player player) {
+		Gamer gamer = BukkitMain.getGamerManager().getGamer(player);
+		PingManager players = new PingManager(ServersType.DEFAULT_SERVER);
+		
+		if (player.getScoreboard() == null) {
+			return;
+		}
+		if (!player.isOnline()) {
+			return;
+		}
+		Team team = null;
+		
+		if (player.getScoreboard().getTeam("jogadores") == null) {
+			team = player.getScoreboard().registerNewTeam("jogadores");
+		} else {
+			team = player.getScoreboard().getTeam("jogadores");
+		}
+		team.setSuffix(" §a" + players.getOnlinePlayers());
+		
+		if (player.getScoreboard().getTeam("moedas") == null) {
+			team = player.getScoreboard().registerNewTeam("moedas");
+		} else {
+			team = player.getScoreboard().getTeam("moedas");
+		}
+		team.setSuffix(" §6" + NumberFormat.getInstance().format(gamer.getMoedas()));
+		
+		if (player.getScoreboard().getTeam("fichas") == null) {
+			team = player.getScoreboard().registerNewTeam("fichas");
+		} else {
+			team = player.getScoreboard().getTeam("fichas");
+		}
+		team.setSuffix(" §3" + NumberFormat.getInstance().format(gamer.getFichas()));
+	}
+
+	public static void sendScoreboard(Player player) {
+		Scoreboard sb = Bukkit.getScoreboardManager().getNewScoreboard();
+	    Objective obj = sb.registerNewObjective("score", "dummy");
+	    obj.setDisplayName(getTitle());
+	    obj.setDisplaySlot(DisplaySlot.SIDEBAR);
+	    
+	    AccountBukkit account = new AccountBukkit(player);
+	    
+	    PingManager pingServer = new PingManager(ServersType.DEFAULT_SERVER);
+	    
+	    PlayerJoinListener.loadPosition();
+	    
+	    Gamer gamer = BukkitMain.getGamerManager().getGamer(player);
+		makeScore("§4", null, null, null, sb, 10);
+		GroupsType group = BukkitMain.getPermissionManager().getPlayerGroup(player);
+		String grupo = (group.name().contains("youtuber".toUpperCase()) ? "" : "");
+	    makeScore(" §fGrupo:", "grupo", " " + grupo, null, sb, 9);
+	    makeScore(" §fClan:", "clan", " §e" + (account.getClan().getGroupClan().getClan() == null ? "N/A" : account.getClan().getStatusClan().getClanName()), null, sb, 8);
+	    makeScore("§3", null, null, null, sb, 7);
+	    makeScore(" §fPosição:", "position", " §a" + PlayerJoinListener.position.get(player.getName()) + "º", null, sb, 6);
+	    makeScore(" §fJogadores:", "jogadores", " §a" + pingServer.getOnlinePlayers(), null, sb, 5);
+	    makeScore("§2", null, null, null, sb, 4);
+	    makeScore(" §fMoedas:", "moedas", " §6" + NumberFormat.getInstance().format(gamer.getMoedas()), null, sb, 3);
+	    makeScore(" §fFichas:", "fichas", " §3" + NumberFormat.getInstance().format(gamer.getFichas()), null, sb, 2);
+	    makeScore("§1", null, null, null, sb, 1);
+	    makeScore("§3www.redefrost", "site", "§3.com.br", null, sb, 0);
+		player.setScoreboard(sb);	
+		return;
+	}
+	
+	public static void removeScoreboard(Player player) {
+		if (!FrostLobby.scoreboard.contains(player.getUniqueId())) {
+			player.getScoreboard().clearSlot(DisplaySlot.SIDEBAR);
+		}
+	}
+	
+	private static FastOfflinePlayer getFastOfflinePlayer(String string, String teamname, String suffix, String prefix, Scoreboard sb) {
+		FastOfflinePlayer fast = new FastOfflinePlayer(string);
+		if (teamname != null) {
+			Team team = null;
+			if (sb.getTeam(teamname)==null) {
+				team = sb.registerNewTeam(teamname);
+			} else {
+				team = sb.getTeam(teamname);
+			}
+			if (suffix != null) {
+				team.setSuffix(suffix);
+			}
+			if (prefix != null) {
+				team.setPrefix(prefix);
+			}
+			team.addPlayer(fast);
+		}
+		return fast;
+	}
+	
+	@SuppressWarnings("deprecation")
+	private static void makeScore(String string, String teamname, String suffix, String prefix, Scoreboard sb, int integer) {
+		Objective obj = null;
+		if (sb.getObjective("score") == null) {
+			obj = sb.registerNewObjective("score", "dummy");
+		} else {
+			obj = sb.getObjective("score");
+		}
+		obj.getScore(getFastOfflinePlayer(string, teamname, suffix, prefix, sb)).setScore(integer);
+	}
+	
+	public static void sendTab(Player p, String cima, String baixo) {
+		if (((CraftPlayer) p).getHandle().playerConnection.networkManager.getVersion() < 46) {
+			return;
+		}
+		IChatBaseComponent tabcima = ChatSerializer.a("{\"text\": \"" + cima + "\"}");
+		IChatBaseComponent tabbaixo = ChatSerializer.a("{\"text\": \"" + baixo + "\"}");
+		PacketTabHeader packet = new ProtocolInjector.PacketTabHeader(tabcima, tabbaixo);
+		((CraftPlayer) p).getHandle().playerConnection.sendPacket(packet);
+	}
+
+}

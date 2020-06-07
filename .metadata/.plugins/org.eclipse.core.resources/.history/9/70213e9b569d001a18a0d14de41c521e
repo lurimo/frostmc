@@ -1,0 +1,172 @@
+package br.com.frostmc.onevsone.battle1v1;
+
+import java.util.Arrays;
+import java.util.List;
+
+import org.bukkit.Bukkit;
+import org.bukkit.Material;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerCommandPreprocessEvent;
+import org.bukkit.event.player.PlayerInteractEntityEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.scheduler.BukkitRunnable;
+
+import br.com.frostmc.onevsone.Frost1v1;
+import br.com.frostmc.onevsone.util.protection.Protection;
+
+public class OnevsoneListener implements Listener {
+	
+	@SuppressWarnings("rawtypes")
+	public int itemsInInventory(Inventory inventory, Material[] search) {
+		List wanted = Arrays.asList(search);
+		int found = 0;
+		ItemStack[] arrayOfItemStack;
+		int j = (arrayOfItemStack = inventory.getContents()).length;
+		for (int i = 0; i < j; i++) {
+			ItemStack item = arrayOfItemStack[i];
+			if ((item != null) && (wanted.contains(item.getType()))) {
+				found += item.getAmount();
+			}
+		}
+		return found;
+	}
+	
+	private OnevsoneManager manager;
+	
+	@SuppressWarnings("static-access")
+	@EventHandler
+	public void playerInteractEvent(PlayerInteractEntityEvent event) {
+		Player player = event.getPlayer();
+		Player target = (Player) event.getRightClicked();
+		if(!(event.getRightClicked() instanceof Player)) {
+			return;
+		}
+		if(!manager.inWarp.contains(player.getUniqueId())) {
+			return;
+		}
+		if(player.getItemInHand().equals(manager.blaze_rod)) {
+			if(manager.cooldown.contains(player.getUniqueId())) {
+				player.sendMessage("§8[§e§l1v1§8] §fVocê deve aguardar um pouco antes de desafiar outro jogador.");
+				return;
+			}
+			manager.invite.add(target.getUniqueId());
+			manager.invited.add(player.getUniqueId());
+			if(manager.invite.contains(player.getUniqueId()) && manager.invited.contains(target.getUniqueId())) {
+				manager.startMatch(player, target);
+				manager.invite.remove(target.getUniqueId());
+				manager.invited.remove(player.getUniqueId());
+				Protection.removeProtection(player);
+				Protection.removeProtection(target);
+				target.sendMessage("§8[§e§l1v1§8] §f" + player.getName() + " aceitou seu desafio!");
+				player.sendMessage("§8[§e§l1v1§8] §fVocê aceitou o desafio do player " + target.getName());
+				return;
+			}
+			player.sendMessage("§a§l1V1 §fVocê desafiou o player " + target.getName());
+			target.sendMessage("§a§l1V1 §fVocê foi desafiado por " + player.getName());
+			manager.cooldown.add(player.getUniqueId());
+			new BukkitRunnable() {
+				public void run() {
+					if (manager.cooldown.contains(player.getUniqueId())) {
+						manager.cooldown.remove(player.getUniqueId());
+						manager.invite.remove(target.getUniqueId());
+						manager.invited.remove(player.getUniqueId());
+						cancel();
+					}
+				}
+			}.runTaskLater(Frost1v1.getInstance(), 250L);
+			return;
+		}
+	}
+	
+	public static Integer task = null;
+	
+	@SuppressWarnings({ "static-access", "deprecation" })
+	@EventHandler
+	public void playerInteract(PlayerInteractEvent event) {
+		Player player = event.getPlayer();
+		if(!manager.inWarp.contains(player.getUniqueId())) {
+			return;
+		}
+		if(player.getItemInHand().equals(manager.gray_color)) {
+			if(manager.fast.contains(player)) {
+				return;
+			}
+			event.setCancelled(true);
+			manager.fast.add(player);
+			player.getInventory().remove(manager.gray_color);
+			player.getInventory().setItem(5, manager.green_color);
+			player.updateInventory();
+			player.sendMessage("§a§lFAST-1V1 §fVocê entrou na fila do 1v1 rápido!");
+			if(manager.fast.size() == 2) {
+				Player player_1 = manager.fast.get(0);
+				Player player_2 = manager.fast.get(1);
+				if(player_1 == null) {
+					manager.fast.remove(player_1);
+				}
+				if(player_2 == null) {
+					manager.fast.remove(player_2);
+				}
+				if(player_1 != null && player_2 != null) {
+					manager.startMatch(player_1, player_2);
+					Protection.removeProtection(player_1);
+					Protection.removeProtection(player_2);
+					manager.fast.remove(player_1);
+					manager.fast.remove(player_2);
+					player_1.sendMessage("§a§lFAST-1V1 §fVocê irá batalhar contra " + player_2.getName());
+					player_2.sendMessage("§a§lFAST-1V1 §fVocê irá batalhar contra " + player_1.getName());
+				}
+			} else {
+				task = Integer.valueOf(Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(Frost1v1.getInstance(), new Runnable() {
+					public void run() {
+						if(manager.fast.contains(player) && player.getInventory().getItem(5).equals(manager.green_color)) {
+							manager.fast.remove(player);
+							player.getInventory().remove(manager.green_color);
+							player.getInventory().setItem(5, manager.gray_color);
+							player.updateInventory();
+							player.sendMessage("§c§lFAST-1V1 §fNão foi encontrado ninguém para batalhar com você!");
+							cancelTask();
+						}
+					}
+				}, 200L, 200L));
+			}
+			return;
+		} else if(player.getItemInHand().equals(manager.green_color)) {
+			if(!manager.fast.contains(player)) {
+				return;
+			}
+			manager.fast.remove(player);
+			cancelTask();
+			player.getInventory().remove(manager.green_color);
+			player.getInventory().setItem(5, manager.gray_color);
+			player.updateInventory();
+			player.sendMessage("§c§lFAST-1V1 §fVocê saiu da fila do 1v1 rápido!");
+			return;
+		}
+	}
+	
+	public static void cancelTask() {
+		if (task == null)
+			return;
+		
+        Bukkit.getServer().getScheduler().cancelTask(task.intValue());
+        task = null;
+	}
+	
+	@SuppressWarnings("static-access")
+	@EventHandler
+	public void asd(PlayerCommandPreprocessEvent e) {
+		Player p = e.getPlayer();
+		if(manager.inWarp.contains(e.getPlayer().getUniqueId())) {
+			if (manager.fighting.containsKey(p.getUniqueId())) {
+				p.sendMessage("§c§lFAST-1V1 §fComandos na warp 1v1 não são permitidos em batalha.");
+				e.setCancelled(true);
+				return;
+			}
+		}
+	}
+
+}

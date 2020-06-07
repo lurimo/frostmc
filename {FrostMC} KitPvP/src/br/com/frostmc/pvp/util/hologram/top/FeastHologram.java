@@ -1,0 +1,5 @@
+package br.com.frostmc.pvp.util.hologram.top;
+
+public class FeastHologram {
+
+}
